@@ -1,0 +1,27 @@
+.DS_Store
+.idea/
+.vscode/
+
+# Local data and review artifacts
+*.sql
+*.sql.gz
+audit/
+
+# Secrets and environment overrides
+**/.local-secrets.properties
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Dependencies and build outputs
+**/node_modules/
+**/dist/
+**/target/
+**/build/
+**/coverage/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.tgz
+*.tar.gz

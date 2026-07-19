@@ -1,0 +1,680 @@
+/* Life Script Landing — mobile-first, responsive desktop */
+.prism-landing-v3-wrap {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #000;
+  display: flex;
+  justify-content: center;
+}
+
+.prism-landing-v3 {
+  --gold-light: #e8c27e;
+  --gold-mid: #c9a04a;
+  --gold-dark: #b38741;
+  --cream: #f5f0e8;
+  --cream-dim: rgba(245, 240, 232, 0.55);
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #000;
+  color: var(--cream);
+  font-family: "Noto Serif SC", "PingFang SC", serif;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.prism-landing-v3 .v3-gold {
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 600;
+}
+
+/* ── Hero ── */
+.prism-landing-v3 .v3-hero {
+  position: relative;
+  flex-shrink: 0;
+  min-height: clamp(280px, 42vh, 360px);
+  overflow: hidden;
+}
+
+.prism-landing-v3 .v3-brand {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top, 14px));
+  left: 18px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prism-landing-v3 .v3-brand-en {
+  font-family: "Cinzel", "Times New Roman", serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: rgba(232, 194, 126, 0.55);
+  font-weight: 400;
+}
+
+.prism-landing-v3 .v3-brand-zh {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: rgba(245, 240, 232, 0.45);
+}
+
+.prism-landing-v3 .v3-hero-watermark {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 1;
+  font-family: "Cinzel", serif;
+  font-size: clamp(42px, 11vw, 56px);
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: 2px;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.prism-landing-v3 .v3-hero-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+}
+
+.prism-landing-v3 .v3-hero-visual {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 0 100%);
+}
+
+.prism-landing-v3 .v3-texture {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-radial-gradient(
+      circle at 28% 38%,
+      transparent 0,
+      transparent 18px,
+      rgba(255, 255, 255, 0.025) 18px,
+      rgba(255, 255, 255, 0.025) 19px
+    ),
+    repeating-radial-gradient(
+      circle at 32% 42%,
+      transparent 0,
+      transparent 28px,
+      rgba(255, 255, 255, 0.018) 28px,
+      rgba(255, 255, 255, 0.018) 29px
+    ),
+    repeating-radial-gradient(
+      circle at 35% 45%,
+      transparent 0,
+      transparent 42px,
+      rgba(255, 255, 255, 0.012) 42px,
+      rgba(255, 255, 255, 0.012) 43px
+    ),
+    linear-gradient(135deg, #0a0a0a 0%, #111 40%, #080808 100%);
+}
+
+.prism-landing-v3 .v3-portrait {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 58%;
+  max-width: 240px;
+  z-index: 2;
+}
+
+.prism-landing-v3 .v3-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: bottom left;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.6));
+  -webkit-mask-image: linear-gradient(to bottom, #000 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 75%, transparent 100%);
+}
+
+.prism-landing-v3 .v3-hero-info {
+  position: absolute;
+  right: 18px;
+  bottom: 28px;
+  z-index: 4;
+  text-align: right;
+  max-width: 52%;
+}
+
+.prism-landing-v3 .v3-name {
+  margin: 0 0 4px;
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 700;
+  letter-spacing: 6px;
+  line-height: 1.1;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold-mid) 45%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.prism-landing-v3 .v3-title {
+  margin: 0 0 8px;
+  font-size: clamp(13px, 3.6vw, 15px);
+  letter-spacing: 2px;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 500;
+}
+
+.prism-landing-v3 .v3-credentials {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(245, 240, 232, 0.42);
+  line-height: 1.4;
+}
+
+.prism-landing-v3 .v3-sep {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(180deg, transparent, rgba(232, 194, 126, 0.45), transparent);
+  flex-shrink: 0;
+}
+
+.prism-landing-v3 .v3-diagonal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(232, 194, 126, 0.08) 20%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(232, 194, 126, 0.06) 80%,
+    transparent 100%
+  );
+  transform: rotate(-8deg);
+  transform-origin: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ── Main body ── */
+.prism-landing-v3 .v3-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.prism-landing-v3 .v3-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 28px 16px;
+  background: #000;
+}
+
+.prism-landing-v3 .v3-line {
+  margin: 0 0 6px;
+  font-size: clamp(13px, 3.6vw, 15px);
+  line-height: 1.85;
+  color: var(--cream-dim);
+  letter-spacing: 1px;
+}
+
+.prism-landing-v3 .v3-sage {
+  margin: 10px 0 12px;
+  font-size: clamp(13px, 3.6vw, 15px);
+  line-height: 1.6;
+  letter-spacing: 1px;
+}
+
+.prism-landing-v3 .v3-sage-era {
+  margin-left: 8px;
+  color: rgba(245, 240, 232, 0.38);
+  font-size: clamp(11px, 3vw, 13px);
+}
+
+.prism-landing-v3 .v3-script-title {
+  margin: 8px 0 16px;
+  font-size: clamp(26px, 7.5vw, 34px);
+  font-weight: 700;
+  letter-spacing: 6px;
+  line-height: 1.3;
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold-mid) 40%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(179, 135, 65, 0.25));
+}
+
+.prism-landing-v3 .v3-footnote {
+  margin: 0;
+  max-width: 300px;
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 0.5px;
+  color: rgba(245, 240, 232, 0.22);
+}
+
+/* ── CTA ── */
+.prism-landing-v3 .v3-cta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 24px max(24px, env(safe-area-inset-bottom, 24px));
+  background: #000;
+}
+
+.prism-landing-v3 .v3-start-btn {
+  position: relative;
+  width: clamp(130px, 36vw, 150px);
+  height: clamp(130px, 36vw, 150px);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: radial-gradient(
+    circle at 42% 38%,
+    #f5d4a8 0%,
+    #e8b878 35%,
+    #c99a4a 70%,
+    #a67c3a 100%
+  );
+  box-shadow:
+    0 0 40px rgba(232, 184, 120, 0.25),
+    0 0 80px rgba(179, 135, 65, 0.12),
+    inset 0 2px 8px rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prism-landing-v3 .v3-start-btn:active {
+  transform: scale(0.96);
+  box-shadow:
+    0 0 24px rgba(232, 184, 120, 0.35),
+    inset 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.prism-landing-v3 .v3-orbit {
+  position: absolute;
+  inset: -18%;
+  width: 136%;
+  height: 136%;
+  pointer-events: none;
+  animation: v3-orbit-spin 40s linear infinite;
+}
+
+@keyframes v3-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.prism-landing-v3 .v3-start-label {
+  position: relative;
+  z-index: 1;
+  font-family: "Noto Serif SC", serif;
+  font-size: clamp(15px, 4.2vw, 17px);
+  font-weight: 500;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.prism-landing-v3 .v3-hint {
+  margin: 18px 0 0;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(245, 240, 232, 0.35);
+  text-align: center;
+}
+
+/* ── Tablet ── */
+@media (min-width: 600px) and (max-width: 767px) {
+  .prism-landing-v3 {
+    max-width: 560px;
+  }
+
+  .prism-landing-v3 .v3-hero {
+    min-height: 360px;
+  }
+
+  .prism-landing-v3 .v3-portrait {
+    max-width: 280px;
+  }
+
+  .prism-landing-v3 .v3-content {
+    padding: 28px 40px 20px;
+  }
+
+  .prism-landing-v3 .v3-footnote {
+    max-width: 400px;
+  }
+}
+
+/* ── Desktop ── */
+@media (min-width: 768px) {
+  .prism-landing-v3 {
+    max-width: 960px;
+    width: calc(100% - 48px);
+    margin: 0 auto;
+    padding: 0 24px;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .prism-landing-v3 .v3-hero {
+    min-height: 380px;
+    padding-top: 8px;
+  }
+
+  .prism-landing-v3 .v3-brand {
+    top: 24px;
+    left: 0;
+  }
+
+  .prism-landing-v3 .v3-brand-en {
+    font-size: 11px;
+    letter-spacing: 5px;
+  }
+
+  .prism-landing-v3 .v3-brand-zh {
+    font-size: 12px;
+  }
+
+  .prism-landing-v3 .v3-hero-watermark {
+    top: 12px;
+    right: 0;
+    font-size: 72px;
+    letter-spacing: 4px;
+  }
+
+  .prism-landing-v3 .v3-hero-inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    min-height: 360px;
+    padding-top: 48px;
+  }
+
+  .prism-landing-v3 .v3-hero-visual {
+    position: relative;
+    flex: 0 0 44%;
+    min-height: 340px;
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+  }
+
+  .prism-landing-v3 .v3-portrait {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 340px;
+  }
+
+  .prism-landing-v3 .v3-hero-info {
+    position: relative;
+    flex: 1;
+    right: auto;
+    bottom: auto;
+    max-width: none;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 0 48px 24px;
+  }
+
+  .prism-landing-v3 .v3-name {
+    font-size: 42px;
+    letter-spacing: 10px;
+  }
+
+  .prism-landing-v3 .v3-title {
+    font-size: 17px;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+
+  .prism-landing-v3 .v3-credentials {
+    font-size: 12px;
+    gap: 14px;
+  }
+
+  .prism-landing-v3 .v3-sep {
+    height: 28px;
+  }
+
+  .prism-landing-v3 .v3-diagonal {
+    bottom: 22%;
+    transform: rotate(-5deg);
+  }
+
+  .prism-landing-v3 .v3-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0 40px;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .prism-landing-v3 .v3-content {
+    flex: 0 1 auto;
+    justify-content: center;
+    padding: 24px 32px 12px;
+    text-align: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .prism-landing-v3 .v3-line {
+    font-size: 16px;
+    margin-bottom: 8px;
+    line-height: 1.9;
+  }
+
+  .prism-landing-v3 .v3-sage {
+    font-size: 16px;
+    margin: 14px 0 16px;
+  }
+
+  .prism-landing-v3 .v3-sage-era {
+    font-size: 14px;
+  }
+
+  .prism-landing-v3 .v3-script-title {
+    font-size: 38px;
+    letter-spacing: 8px;
+    margin: 12px 0 20px;
+  }
+
+  .prism-landing-v3 .v3-footnote {
+    max-width: 420px;
+    font-size: 11px;
+  }
+
+  .prism-landing-v3 .v3-cta {
+    flex: 0 0 auto;
+    justify-content: center;
+    padding: 12px 32px 0;
+    width: 100%;
+  }
+
+  .prism-landing-v3 .v3-start-btn {
+    width: 160px;
+    height: 160px;
+  }
+
+  .prism-landing-v3 .v3-start-label {
+    font-size: 18px;
+  }
+
+  .prism-landing-v3 .v3-hint {
+    font-size: 11px;
+    max-width: 360px;
+    line-height: 1.6;
+  }
+
+  .prism-landing-v3 .v3-start-btn:hover {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 50px rgba(232, 184, 120, 0.35),
+      0 0 100px rgba(179, 135, 65, 0.18),
+      inset 0 2px 8px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* ── Large desktop ── */
+@media (min-width: 1100px) {
+  .prism-landing-v3 {
+    max-width: 1040px;
+  }
+
+  .prism-landing-v3 .v3-hero {
+    min-height: 420px;
+  }
+
+  .prism-landing-v3 .v3-hero-inner {
+    min-height: 400px;
+  }
+
+  .prism-landing-v3 .v3-hero-visual {
+    flex: 0 0 42%;
+    min-height: 380px;
+  }
+
+  .prism-landing-v3 .v3-portrait {
+    max-width: 380px;
+  }
+
+  .prism-landing-v3 .v3-name {
+    font-size: 48px;
+  }
+
+  .prism-landing-v3 .v3-line {
+    font-size: 17px;
+  }
+
+  .prism-landing-v3 .v3-script-title {
+    font-size: 42px;
+  }
+
+  .prism-landing-v3 .v3-cta {
+    flex: 0 0 auto;
+  }
+
+  .prism-landing-v3 .v3-start-btn {
+    width: 170px;
+    height: 170px;
+  }
+}
+
+/* ── Short screens (mobile) ── */
+@media (max-height: 700px) and (max-width: 767px) {
+  .prism-landing-v3 .v3-hero {
+    min-height: clamp(220px, 36vh, 280px);
+  }
+
+  .prism-landing-v3 .v3-content {
+    padding: 14px 24px 10px;
+  }
+
+  .prism-landing-v3 .v3-line {
+    margin-bottom: 3px;
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .prism-landing-v3 .v3-sage {
+    margin: 6px 0 8px;
+  }
+
+  .prism-landing-v3 .v3-script-title {
+    margin: 4px 0 10px;
+    font-size: 22px;
+  }
+
+  .prism-landing-v3 .v3-footnote {
+    font-size: 9px;
+  }
+
+  .prism-landing-v3 .v3-start-btn {
+    width: 118px;
+    height: 118px;
+  }
+
+  .prism-landing-v3 .v3-cta {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+}
+
+/* ── Short desktop ── */
+@media (min-width: 768px) and (max-height: 760px) {
+  .prism-landing-v3 .v3-hero {
+    min-height: 300px;
+  }
+
+  .prism-landing-v3 .v3-hero-inner {
+    min-height: 280px;
+    padding-top: 36px;
+  }
+
+  .prism-landing-v3 .v3-hero-visual {
+    min-height: 260px;
+  }
+
+  .prism-landing-v3 .v3-name {
+    font-size: 34px;
+  }
+
+  .prism-landing-v3 .v3-line {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .prism-landing-v3 .v3-script-title {
+    font-size: 30px;
+    margin: 8px 0 12px;
+  }
+
+  .prism-landing-v3 .v3-start-btn {
+    width: 140px;
+    height: 140px;
+  }
+
+  .prism-landing-v3 .v3-main {
+    padding-bottom: 20px;
+  }
+}

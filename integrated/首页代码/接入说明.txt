@@ -1,0 +1,17 @@
+【首页代码包 — 仅 2 个源码文件 + 1 张图片】
+
+覆盖到项目相同路径：
+  frontend/src/components/prism/PrismLandingV3.tsx   ← 首页组件
+  frontend/src/styles/prism-landing-v3.css         ← 首页样式
+  frontend/public/images/luodao-halfbody-v2.png    ← 人像图片
+
+────────────────────────────────────────
+Home.tsx 只需改一行（如果还没改）：
+
+  return <PrismLandingV3 onStart={handleStartTest} questionCount={questionCount} />;
+
+原来可能是：
+  return <PrismLandingV3 onStart={handleStartTest} />;
+
+────────────────────────────────────────
+验证：cd frontend && npm run dev，打开首页即可。

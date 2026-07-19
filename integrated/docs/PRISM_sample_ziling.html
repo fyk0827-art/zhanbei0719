@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>梓灵 · PRISM 人生剧本（击中版）</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--pri:#B88746;--pri-dk:#4B2E18;--pri-lt:#FFF6E8;--bg:#FFFCF7;--card:#FFFFFF;--ink:#211A14;--muted:#766454;--line:#E8D7C0;--banner-from:#1D120A;--banner-mid:#5B351B;--banner-to:#B88746;--gold:#D8B06A;--rose:#C98F7A;--shadow:0 18px 50px rgba(75,46,24,.14);--radius:24px;--serif:'Noto Serif SC','STSong','Songti SC',Georgia,serif;--sans:'Microsoft YaHei','PingFang SC',Arial,sans-serif}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,var(--pri-lt),var(--bg) 360px);color:var(--ink);font-family:var(--sans);line-height:1.82}a{color:inherit;text-decoration:none}.wrap{width:min(1120px,92vw);margin:0 auto}.banner{position:relative;min-height:430px;overflow:hidden;color:#fff;background:url('A_beautiful_manga_anime_style__2026-07-10T09-22-35.png') center center / cover no-repeat;}.banner:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(29,18,10,.65),rgba(29,18,10,.25));pointer-events:none}.banner-inner{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:32px;align-items:center;padding:58px 0 80px}.eyebrow{letter-spacing:.18em;font-size:13px;opacity:.78}.banner h1{font-family:var(--serif);font-size:58px;line-height:1.08;margin:16px 0 10px;font-weight:800}.identity{font-family:var(--serif);font-size:30px;color:#FFE2A5;margin:12px 0}.tagline{font-size:19px;max-width:560px;opacity:.92}.version{display:inline-flex;margin-top:28px;padding:10px 18px;border:1px solid rgba(255,226,165,.5);border-radius:999px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);font-size:14px}.art{height:285px;border-radius:34px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(0,0,0,.2);overflow:hidden}.hero{margin-top:-54px;position:relative;z-index:5}.hero-card{display:grid;grid-template-columns:220px 1fr;gap:28px;padding:28px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border:1px solid rgba(232,215,192,.9);border-radius:var(--radius);box-shadow:var(--shadow)}.avatar{width:190px;height:190px;margin:auto;border-radius:50%;background:radial-gradient(circle at 30% 20%,#FFF5D6,#D8B06A 46%,#5B351B);display:grid;place-items:center;color:#fff;font-family:var(--serif);font-size:72px;font-weight:800;box-shadow:inset 0 0 0 8px rgba(255,255,255,.38),0 14px 40px rgba(75,46,24,.28)}.hero h2{font-family:var(--serif);font-size:32px;color:var(--pri-dk);margin:0 0 12px}.hero p{margin:0;font-size:15px;color:var(--muted)}.score-strip{margin-top:28px;margin-bottom:38px}.scores{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.score{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;text-align:center;box-shadow:0 8px 24px rgba(75,46,24,.08)}.rank{font-size:12px;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}.num{font-family:var(--serif);font-size:48px;font-weight:800;color:var(--pri);line-height:1}.ability{font-size:16px;font-weight:600;margin:8px 0 6px;color:var(--ink)}.note{font-size:13px;color:var(--muted);line-height:1.5}.nav{position:sticky;top:0;z-index:100;background:rgba(255,252,247,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);margin-bottom:32px}.nav-inner{display:flex;gap:8px;padding:14px 0;overflow-x:auto}.nav a{font-size:13px;padding:8px 14px;border-radius:999px;white-space:nowrap;transition:all .2s}.nav a:hover{background:var(--pri-lt);color:var(--pri-dk)}.section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:32px 28px;margin-bottom:24px;box-shadow:0 8px 24px rgba(75,46,24,.06)}.section h2{font-family:var(--serif);font-size:28px;color:var(--pri-dk);margin:0 0 18px;font-weight:700}.lead{font-size:20px;color:var(--pri);font-weight:600;margin:0 0 18px}.section p{margin:0 0 14px;line-height:1.88}.section ul,.section ol{margin:0 0 14px;padding-left:24px;line-height:1.88}.quote{background:var(--pri-lt);border-left:4px solid var(--pri);padding:18px 22px;margin:18px 0;font-style:italic;color:var(--pri-dk)}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.mini-card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px}.mini-card h3{font-size:16px;font-weight:600;margin:0 0 10px;color:var(--pri-dk)}.mini-card p{margin:0;font-size:14px;color:var(--muted)}.chart-box{height:360px}table{width:100%;border-collapse:collapse;margin:18px 0}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{background:var(--pri-lt);color:var(--pri-dk);font-weight:600}td{font-size:14px}.pill{display:inline-block;padding:6px 14px;margin:4px 6px 4px 0;background:var(--pri-lt);color:var(--pri-dk);border-radius:999px;font-size:13px}.final{font-family:var(--serif);font-size:28px;line-height:1.68;color:var(--pri-dk);font-weight:500;padding:24px 0}.footer{text-align:center;padding:40px 0;color:var(--muted);font-size:13px}
+    @media(max-width:760px){.wrap{width:min(94vw,680px)}.banner{min-height:auto}.banner-inner{grid-template-columns:1fr;padding:38px 0 74px}.banner h1{font-size:42px}.identity{font-size:24px}.art{height:210px}.hero-card{grid-template-columns:1fr;text-align:center;padding:22px}.avatar{width:150px;height:150px;font-size:56px}.hero h2{font-size:28px}.scores{grid-template-columns:1fr 1fr}.section{padding:24px 18px;border-radius:20px}.section h2{font-size:24px}.lead{font-size:19px}.grid2{grid-template-columns:1fr}.chart-box{height:300px}th,td{font-size:13px;padding:9px}.nav-inner{padding-left:3vw}.final{font-size:22px}}
+  </style>
+</head>
+<body data-planet="venus">
+  <header class="banner">
+    <div class="wrap banner-inner">
+      <div>
+        <div class="eyebrow">PRISM 人生剧本 · 击中版</div>
+        <h1>梓灵</h1>
+        <div class="identity">金星人 · 跨界价值顾问</div>
+        <div class="tagline">把价值、关系和知识变成可流动的影响力</div>
+        <div class="version">V4.6 · 幸运指数84分（方向对了，资源、机会和贵人会逐步靠近）</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero wrap">
+    <div class="hero-card">
+      <div class="avatar">梓</div>
+      <div>
+        <h2>金星人 · 跨界价值顾问</h2>
+        <p>梓灵，你不是靠蛮力打开人生的人，你靠的是品位、判断、关系连接和价值转化。你的核心不是单纯好看、会说话、会社交，而是能把复杂的资源、关系、钱、知识和情绪，重新整理成别人愿意相信、愿意购买、愿意合作的价值。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="score-strip wrap">
+    <div class="scores">
+      <div class="score"><div class="rank">TOP1</div><div class="num">91</div><div class="ability">审美力</div><div class="note">能给美定价</div></div>
+      <div class="score"><div class="rank">TOP2</div><div class="num">89</div><div class="ability">洞察力</div><div class="note">能看穿真实价值</div></div>
+      <div class="score"><div class="rank">TOP3</div><div class="num">87</div><div class="ability">表达力</div><div class="note">能翻译成一句话</div></div>
+      <div class="score"><div class="rank">TOP4</div><div class="num">84</div><div class="ability">共情力</div><div class="note">能站在不同人立场</div></div>
+    </div>
+  </section>
+
+  <nav class="nav"><div class="wrap nav-inner">
+    <a href="#s1">人物画像</a><a href="#s2">核心定位</a><a href="#s3">能力雷达</a><a href="#s4">主能力</a><a href="#s5">职业身份</a><a href="#s6">行业地图</a><a href="#s7">财富角色</a><a href="#s8">幸运指数</a><a href="#s9">行动路线</a><a href="#s10">执行卡</a>
+  </div></nav>
+
+  <main class="wrap">
+<section id="s1" class="section">
+<h2>Section 1｜人物画像：梓灵，你是一个什么样的人</h2>
+<p class="lead">梓灵，先说结论：你适合做"价值翻译官"</p>
+<p>不是那种温柔型的"价值翻译官"，也不是执行型的。</p>
+<p><strong>你真正厉害的地方，是能在别人看不清价值的地方，看见它的价格、意义和人群。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你的星盘在说什么？</h3>
+<p>你的上升在天秤，命主星是金星。</p>
+<p>金星落在双子座第9宫。</p>
+<p>这个结构非常关键：<strong>你的人生不是靠待在一个固定位置里反复消耗自己，而是靠学习、传播、跨界、远方、课程、咨询、语言、内容和知识体系打开。</strong></p>
+<p>你不是只适合做一个"漂亮的人""会说话的人""关系好的人"。</p>
+<p>你更适合成为一个能把信息讲清楚、把审美变成产品、把关系变成资源、把资源变成收入的人。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">但你也不是完全轻松的盘</h3>
+<p>太阳、水星都在金牛第8宫，木星和冥王在天蝎第2宫。</p>
+<p>这说明你对钱、信任、安全感、资源绑定非常敏感。</p>
+<p><strong>你不是表面轻飘飘的人，你内在其实很会观察：</strong></p>
+<ul>
+<li>谁靠谱，谁虚</li>
+<li>哪里有钱，哪里有风险</li>
+<li>谁在说真话，谁在装</li>
+</ul>
+<p>你的问题不是没能力，而是有时候太容易被"安全感"和"关系压力"牵住。</p>
+<p>你很怕自己判断错人、投错资源、押错方向。</p>
+<p>所以有时候明明已经看见机会，却会先停下来怀疑。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">一句话：你是谁？</h3>
+<p>你的人生关键词不是"稳定"，而是：</p>
+<div class="quote">**把价值讲出来，把资源盘活，把关系变成机会。**</div>
+</section>
+
+<section id="s2" class="section">
+<h2>Section 2｜核心定位：梓灵，你到底适合做什么？</h2>
+<p class="lead">先说结论：你不是做内容的人，也不是做执行的人。你是做"定价"的人。</p>
+<div style="margin:24px 0">
+  <p class="lead">你的能力分布一目了然</p>
+  <div style="height:420px;position:relative">
+    <canvas id="horizontalBar"></canvas>
+  </div>
+</div>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">什么意思？</h3>
+<p>别人做完一个项目问"这个好不好"，你直接问"这个值多少钱、卖给谁、为什么他们会买"。</p>
+<p>别人看到一个民宿觉得"装修挺好看"，你能直接说出：</p>
+<div class="quote">"这个空间值3000/晚，因为它的美学调性能承接高净值女性客群的情绪价值。"</div>
+<p>别人做了一个课程不知道怎么卖，你看一眼就能说：</p>
+<div class="quote">"这个课程不是卖给小白的，是卖给已经赚到第一桶金、但不知道下一步怎么走的人。定价9800，主打'避免走弯路'。"</div>
+<p><strong>这不是商业敏感，这是你的天赋自带商业翻译器。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你有三个核心能力支撑这个定位</h3>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">1. 审美力91分（前9%）</h4>
+<p>你能看见美，更能看见美的价格。</p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">2. 洞察力89分（前11%）</h4>
+<p>你能看穿项目的真实价值和目标人群。</p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">3. 表达力87分（前13%）</h4>
+<p>你能把复杂的价值翻译成一句话的卖点。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">所以你的核心定位是：跨界价值顾问</h3>
+<p>你不生产内容，你定义内容的价格。</p>
+<p>你不做执行，你告诉别人怎么做值钱。</p>
+<p><strong>一句话：你是"看见价值、定义价格、找到买家"的那个人。</strong></p>
+</section>
+
+<section id="s3" class="section">
+<h2>Section 3｜主能力雷达：你的六大核心能力，到底长什么样子？</h2>
+<p class="lead">先看数据</p>
+<table>
+<tr><th>能力</th><th>分数</th><th>百分位</th></tr>
+<tr><td>审美力</td><td>91</td><td>前9%</td></tr>
+<tr><td>洞察力</td><td>89</td><td>前11%</td></tr>
+<tr><td>表达力</td><td>87</td><td>前13%</td></tr>
+<tr><td>共情力</td><td>84</td><td>前16%</td></tr>
+<tr><td>领导力</td><td>73</td><td>前27%</td></tr>
+<tr><td>行动力</td><td>71</td><td>前29%</td></tr>
+</table>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">所以呢？这意味着什么？</h3>
+<p><strong>这意味着：你最适合做的事，是用审美和洞察去发现价值，再用表达和共情去翻译价值。</strong></p>
+<p>执行和领导不是你的主战场。</p>
+<p>找一个执行力强的搭档，或者把你的判断直接卖给有执行团队的老板，你会更顺。</p>
+<p><strong>别自己干全套，你不是全能型选手，你是"看准了、说清楚、定好价"的专家。</strong></p>
+</section>
+
+<section id="s4" class="section">
+<h2>Section 4｜经典人物案例：不是说你等于他们，而是你身上有这类人的气质</h2>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">人物卡 1｜可可·香奈儿</h3>
+<p>她把审美、品位和女性价值感，变成了可以定价、可以传播、可以长期经营的品牌语言。</p>
+<p>你也是这一类：<strong>不是只会"觉得好看"，而是能把好看变成价值。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">人物卡 2｜简·奥斯汀</h3>
+<p>她不是靠热闹取胜，而是靠对关系、阶层、婚恋和人性细节的准确观察，把洞察写成作品。</p>
+<p>你在关系、价值和人群判断上，也有这种看穿表面、抓住核心的能力。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">人物卡 3｜奥黛丽·赫本</h3>
+<p>她真正的厉害，不只是美，而是把气质、信任感、公众形象和善意，长期转化成社会影响力。</p>
+<p>你也适合走这种路线：<strong>靠品位、信任和稳定感建立长期价值。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">人物卡 4｜伊丽莎白·泰勒</h3>
+<p>她能把个人魅力、关系资源和公众关注，变成一个可被放大的商业与社会价值。</p>
+<p>你不是只适合待在幕后，你也适合站到台前，把自己的判断力变成影响力。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">一句话</h3>
+<p>你真正适合的位置，不是"我被安排做什么"，而是：</p>
+<div class="quote">**我来判断这个东西值不值得，我来告诉别人为什么值得。**</div>
+</section>
+
+<section id="s5" class="section">
+<h2>Section 5｜职业身份地图：你最适合的15个职业身份</h2>
+<p class="lead">先说结论：你不是"列表里选一个"，而是"从最容易切入的开始"</p>
+<div style="margin:24px 0">
+  <p class="lead">7大职业身份匹配度雷达</p>
+  <div style="height:380px;position:relative">
+    <canvas id="careerRadar"></canvas>
+  </div>
+  <p style="margin-top:14px;color:#766454;font-size:14px">图中显示的是你在7个红色主角区职业身份中的匹配度，分数越高越适合</p>
+</div>
+<p>你最适合的职业身份有15个，但不是平均分布的。</p>
+<p>有些是<strong>红色主角区</strong>（你最容易做出结果），有些是<strong>金色配角区</strong>（可以做，但不是最优），有些是<strong>淡灰边角料区</strong>（长期做会越来越没光）。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">🔴 红色主角区（这些身份你最容易红）</h3>
+<ol>
+<li>**跨界价值顾问**</li>
+<li>**高客单咨询顾问**</li>
+<li>**品牌内容策划人**</li>
+<li>**文旅项目策划人**</li>
+<li>**课程产品设计师**</li>
+<li>**财富规划顾问**</li>
+<li>**高端客户关系顾问**</li>
+</ol>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">🟡 金色配角区（可以做，但最好做中高端位置）</h3>
+<ol>
+<li>**女性成长教练**</li>
+<li>**空间美学顾问**</li>
+<li>**投资顾问助理**</li>
+<li>**保险规划师**</li>
+<li>**研学旅行导师**</li>
+</ol>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">⚪ 淡灰边角料区（不建议长期做）</h3>
+<p>13. <strong>纯执行型客服</strong></p>
+<p>14. <strong>低客单销售</strong></p>
+<p>15. <strong>无判断权的行政岗</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">那么，你现在应该从哪里切入？</h3>
+<p><strong>如果你现在还没找到明确方向，建议你从这两个身份切入：</strong></p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">切入点1：高客单咨询顾问</h4>
+<p>为什么？因为这个身份最能快速验证你的"价值翻译能力"，且不需要太长的积累期。</p>
+<p><strong>具体怎么做？</strong></p>
+<ul>
+<li>设计一个"3小时价值诊断服务"</li>
+<li>定价3000-5000/次</li>
+<li>找3个朋友的项目免费测试</li>
+<li>然后开始收费</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">切入点2：文旅项目策划人</h4>
+<p>为什么？因为文旅行业需要的正是你的核心能力：审美判断、人群定位、价格定义。</p>
+<p><strong>具体怎么做？</strong></p>
+<ul>
+<li>找一个民宿/营地/文旅项目</li>
+<li>帮他们做"定位+定价+目标人群"诊断</li>
+<li>写一个1-2页的诊断报告</li>
+<li>验证你的判断力能不能卖钱</li>
+</ul>
+<p><strong>记住：不要一开始就想做全部15个身份。先跑通一个，再横向扩展。</strong></p>
+</section>
+
+<section id="s6" class="section">
+<h2>Section 6｜行业主角地图：你在哪些行业最容易做出结果？</h2>
+<p class="lead">先说结论：你在"咨询、金融、教育、文旅、审美品牌"里最容易红</p>
+<p>但"咨询""金融""教育"这些词太宏观了，用户听完不知道具体是什么。</p>
+<p>我给你翻译成具体场景：</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">🔴 红色主角区（这些行业你更容易做出结果）</h3>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">1. 财富管理 / 保险规划 / 投资顾问</h4>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>比如保险规划师：帮高净值家庭做保险配置，年收入50万+</li>
+<li>比如财富管理顾问：帮企业主做资产配置，收取咨询费+管理费</li>
+<li>比如投资顾问：帮客户看懂基金、股票、债券，收取服务费</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">2. 高客单咨询 / 婚恋家庭咨询 / 女性成长咨询</h4>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>比如女性成长顾问：做1对1深度咨询，定价5000-2万/次</li>
+<li>比如婚恋家庭咨询：帮女性看懂关系模式，收取咨询费</li>
+<li>比如职业规划顾问：帮迷茫的职场人找到方向，定价5000-1万/次</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">3. 教育培训 / 课程产品 / 研学旅行</h4>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>比如课程产品经理：设计一个"女性财富觉醒"课程，定价3980</li>
+<li>比如研学旅行导师：带高端家庭做海外研学，客单价3-5万/家庭</li>
+<li>比如企业培训讲师：给企业做内训，收费1-3万/天</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">4. 文旅策划 / 民宿营地 / 旅游产品</h4>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>比如文旅项目策划：帮一个民宿老板重新定义空间故事，收费2-5万</li>
+<li>比如旅游产品经理：设计一个"城市精英的第二故乡"旅游线路</li>
+<li>比如民宿主理人：自己做一个有调性的民宿，客单价2000-5000/晚</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">5. 审美生活方式 / 空间美学 / 形象管理</h4>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>比如高端生活方式顾问：帮高净值女性做"衣食住行"审美升级，收费5-10万/年</li>
+<li>比如空间美学顾问：帮客户做家居空间设计，收费3-8万/套</li>
+<li>比如形象管理顾问：帮职场女性做形象诊断，收费5000-2万/次</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">6. 品牌策划 / 内容商业化 / 私域顾问</h4>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>比如品牌内容策划：帮一个品牌写"品牌故事+内容体系"，收费5-10万</li>
+<li>比如私域顾问：帮企业做私域运营策略，收费3-8万/年</li>
+<li>比如内容商业化顾问：帮博主/IP把内容变现，收取咨询费+分成</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">🟡 金色配角区（可以做，但最好做中高端位置）</h3>
+<ul>
+<li>房地产销售（做别墅、商业地产，不做低价刚需房）</li>
+<li>医疗健康私域（做高端女性健康顾问，不做纯客服）</li>
+<li>法律合规辅助（做家族财富法律服务，不做纯文书）</li>
+<li>公关传播（做高端客户关系，不做纯执行）</li>
+<li>公务事业单位（做教育、文化、妇联等有表达空间的岗位，不做纯行政）</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">⚪ 淡灰边角料区（不建议长期做）</h3>
+<ul>
+<li>纯流水线执行</li>
+<li>低客单客服</li>
+<li>无审美空间的重复行政</li>
+<li>没有客户接触的后台杂务</li>
+<li>完全不能表达观点的岗位</li>
+</ul>
+<p><strong>你一旦长期做边角料区，会越来越没有光，因为你的能力需要"价值判断"和"关系流动"。</strong></p>
+</section>
+
+<section id="s7" class="section">
+<h2>Section 7｜婚姻主角地图：你需要什么样的伴侣？</h2>
+<p class="lead">先说结论：你需要成熟稳定、能给你空间、能一起谈钱谈未来的人</p>
+<p>你适合的伴侣或重要合伙人，不是情绪特别黏、特别控制、特别没有边界的人。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你需要的伴侣，有这12个特质</h3>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">🔴 红色核心特质（必须有，缺一不可）</h4>
+<ol>
+<li>**成熟稳定**：不是情绪化、不是巨婴、不是需要你照顾的人</li>
+<li>**有现实能力**：能赚钱、能解决问题、能处理具体事务</li>
+<li>**尊重你的学习和表达**：不打断你的成长、不嘲笑你的追求</li>
+<li>**能一起讨论钱和未来**：不是"谈钱伤感情"的人，而是能一起规划的人</li>
+</ol>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">🟡 金色加分特质（有更好，没有也不致命）</h4>
+<ol>
+<li>**有行动力**：能推进事情，不是只会想不会做的人</li>
+<li>**有审美共鸣**：能理解你对美、品质、调性的追求</li>
+<li>**有社会资源**：有一定的圈层、人脉、资源</li>
+<li>**懂得尊重边界**：不用情绪绑架你、不过度索取</li>
+</ol>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">⚪ 淡灰避坑特质（有这些特质的人，要小心）</h4>
+<ol>
+<li>**控制欲强**：会打断你的学习、远方、表达和跨界机会</li>
+<li>**财务混乱**：钱不清楚、负债不透明、投资靠感觉</li>
+<li>**情绪勒索型**：动不动就"你不爱我了""你变了"</li>
+<li>**只谈感情不谈价值**：让你一直付出，但不愿意为你的专业买单</li>
+</ol>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">最适合你的关系模式是什么？</h3>
+<div class="quote">**对方有行动力，你有判断力；对方能推进，你能定价值。**</div>
+<p>火星白羊第7宫说明，你在关系里其实很容易被强势的人吸引，也容易遇到行动快、脾气急、主导感强的人。</p>
+<p>这种人可以给你推动力，但如果对方太冲、太急、太自我，你会被消耗。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">避坑指南：你最不需要什么样的人？</h3>
+<p>你最不需要的伴侣类型是：</p>
+<ol>
+<li>**纯浪漫主义者**：只会制造惊喜但不落地，钱不清楚、未来不明确</li>
+<li>**强控制欲的领导型**：会压制你的判断力，让你变成执行工具</li>
+<li>**纯执行型工具人**：无法与你共建价值观，只能听命令</li>
+</ol>
+</section>
+
+<section id="s8" class="section">
+<h2>Section 8｜财富角色地图：你靠什么赚钱？</h2>
+<p class="lead">先说结论：你靠"信任、资源、专业判断"赚钱，不是靠体力换钱</p>
+<div style="margin:24px 0">
+  <p class="lead">你的5种财富方式占比</p>
+  <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:28px;align-items:center">
+    <div style="height:300px;position:relative">
+      <canvas id="wealthPie"></canvas>
+    </div>
+    <div>
+      <p style="margin:0 0 14px;line-height:1.88"><strong style="color:#B88746">顾问型收入(30%)</strong>是你的第一财富来源。咨询、规划、方案、诊断这类高客单服务最适合你。</p>
+      <p style="margin:0 0 14px;line-height:1.88"><strong style="color:#D8B06A">信任型成交(25%)</strong>排第二。保险、财富管理、高客单服务，靠信任和专业判断赚钱。</p>
+      <p style="margin:0;line-height:1.88">知识型产品(20%)、审美型溢价(15%)、资源整合(10%)是其他财富来源。</p>
+    </div>
+  </div>
+</div>
+<p>你不是最适合赚快钱的人，也不适合长期靠体力换钱。</p>
+<p>你的财富结构很明显：</p>
+<ul>
+<li>太阳、水星在第8宫：懂资源、信任、风险、利益绑定</li>
+<li>木星、冥王在第2宫：钱的欲望和财富潜力都不弱</li>
+<li>金星第9宫：钱来自知识、跨界、传播、远方和高认知客户</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你最适合的10种财富方式</h3>
+<p>但"顾问型收入""信任型成交"这些词太抽象了，我给你翻译成具体场景：</p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">🔴 红色主角区（这些财富方式你最容易做出结果）</h4>
+<p>##### 1. 顾问型收入</p>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>你帮一个民宿老板重新定义空间故事，客单价从300涨到1200，你拿2万策划费+每月分成</li>
+<li>你帮一个品牌做"定位+定价+目标人群"诊断，收费5-10万</li>
+<li>你帮一个女性做"职业规划+财富规划"，收费5000-2万/次</li>
+</ul>
+<p>##### 2. 信任型成交</p>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>你做保险规划师，客户不是因为便宜买你，而是因为你能看懂她真正担心什么，年收入50万+</li>
+<li>你做财富管理顾问，客户愿意把几百万资产交给你管理，因为你能把复杂的投资逻辑翻译成人话</li>
+<li>你做高客单咨询，一次收费5000-2万，客户觉得值</li>
+</ul>
+<p>##### 3. 知识型产品</p>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>你做一个"女性财富觉醒"课程，定价3980，卖100份=39.8万</li>
+<li>你做一个"高客单咨询成交训练营"，定价9800，一期20人=19.6万</li>
+<li>你做一个"价值翻译力工作坊"，定价1500/人，一场10人=1.5万</li>
+</ul>
+<p>##### 4. 审美型溢价</p>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>你帮一个客户做"家居空间美学诊断"，收费3-8万/套</li>
+<li>你做一个有调性的民宿，客单价2000-5000/晚，而不是300-800</li>
+<li>你帮一个品牌做"审美升级"，客户愿意为"高级感"多付30-50%的溢价</li>
+</ul>
+<p>##### 5. 资源整合型收入</p>
+<p><strong>具体是什么？</strong></p>
+<ul>
+<li>你帮一个文旅项目对接投资人，成功后拿5-10%的撮合费</li>
+<li>你把一个高净值客户转介绍给保险顾问/财富顾问/律师，拿10-20%的转介绍费</li>
+<li>你做一个"高端女性社群"，对接资源、项目、合作，收取会员费+项目分成</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">🟡 金色配角区（可以做，但不是最优）</h4>
+<ol>
+<li>**课程分销收入**：卖别人的课，拿10-30%分成</li>
+<li>**品牌代言收入**：为高端品牌做形象代言，收取代言费</li>
+<li>**内容广告收入**：做内容IP，接高端品牌广告</li>
+<li>**投资收益**：用专业判断力做投资，但必须有专业框架</li>
+</ol>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">⚪ 淡灰避坑区（不建议做）</h4>
+<p>10. <strong>低价高消耗服务</strong>：比如收费500的咨询、9.9的课程、低客单的客服</p>
+<p><strong>这会毁掉你的金星能量。你越低价讨好，越没有贵人。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你的财富红线是什么？</h3>
+<div class="quote">**不要因为关系不好意思谈钱，也不要因为安全感焦虑去碰看不懂的投资。**</div>
+</section>
+
+<section id="s9" class="section">
+<h2>Section 9｜幸运指数：你的好运从哪里来？</h2>
+<p class="lead">先说结论：幸运指数84分，入口在1飞9</p>
+<div style="margin:24px 0">
+  <p class="lead">你的幸运入口漏斗：从命主星到最终幸运指数</p>
+  <div style="height:360px;position:relative">
+    <canvas id="luckyFunnel"></canvas>
+  </div>
+  <p style="margin-top:14px;line-height:1.88">这张图展示:命主星飞宫基础分85分 → 加上命主星状态+5分 → 减去风险扣分-6分 = 最终幸运指数84分</p>
+</div>
+<p>你的上升是天秤，命主星是金星。</p>
+<p>金星落在第9宫，所以你的命主星飞宫是：</p>
+<p># <strong>1飞9</strong></p>
+<p>这就是你幸运指数的第一依据。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">1飞9代表什么？</h3>
+<ul>
+<li>学习越多越顺</li>
+<li>讲课越多越顺</li>
+<li>跨地域越顺</li>
+<li>出去见人越顺</li>
+<li>接触高认知人群越顺</li>
+<li>做课程、出版、咨询、文旅、跨界传播越顺</li>
+</ul>
+<p><strong>你不是窝在小圈子里最顺的人。</strong></p>
+<p>你越被困在熟人关系、低端事务、重复日常里，越容易觉得自己没机会。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你的机会来自哪里？</h3>
+<p>你的机会来自：</p>
+<ul>
+<li>更大的平台</li>
+<li>更远的地方</li>
+<li>更高认知的人群</li>
+<li>更系统的知识表达</li>
+<li>更有审美和信任感的商业场景</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">为什么不是90分以上？</h3>
+<p>因为金星刑土星，说明你的价值表达会遇到现实压力：</p>
+<p>你会怕自己不够专业、怕别人不认可、怕关系冷掉、怕谈钱伤感情。</p>
+<p>所以你不是"随便一走就开挂"，你是：</p>
+<div class="quote">**只要方向走对，越跨界、越学习、越输出、越接触高价值客户，机会就越靠近。**</div>
+</section>
+
+<section id="s10" class="section">
+<h2>Section 10｜主能力说明书：你的六大能力，到底长什么样子？</h2>
+<div style="margin:24px 0">
+  <p class="lead">你的六大能力雷达图</p>
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center">
+    <div style="height:400px;position:relative">
+      <canvas id="radar"></canvas>
+    </div>
+    <div>
+      <p style="margin:0 0 14px;line-height:1.88">审美力、洞察力、表达力、共情力连起来，就是非常适合做咨询顾问、课程主理人、高客单销售、财富/保险/投资类顾问、女性成长内容、审美生活方式品牌、教育培训、文旅研学、跨界资源整合。</p>
+      <p style="margin:0;line-height:1.88;color:#B88746;font-weight:600">你不能长期做没有判断权、没有表达权、没有资源接触的岗位。那会把你最值钱的部分埋掉。</p>
+    </div>
+  </div>
+</div>
+
+<p class="lead">梓灵，不是罗列数字，而是告诉你每个能力具体长什么样子</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">能力1｜审美力 91分（前9%）｜你能给美定价</h3>
+<p><strong>什么是审美力？</strong></p>
+<p>不是"你觉得这个好看"，而是<strong>"你能说出这个好看值多少钱"</strong>。</p>
+<p><strong>梓灵式场景：</strong></p>
+<p>别人看到一个空间：</p>
+<p>"哇，这个装修好好看啊！"</p>
+<p>你看到同一个空间：</p>
+<p>"这个空间的美学调性是克制的高级感，适合承接30-45岁高净值女性客群，定位'情绪避难所'，客单价可以定在2500-3500/晚。但如果只是定位'网红民宿'，那就只能卖800-1200，而且很快会被抄。"</p>
+<p><strong>这就是你的审美力：不是看见美，是看见美的价格。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">能力2｜洞察力 89分（前11%）｜你能看穿真实价值</h3>
+<p><strong>什么是洞察力？</strong></p>
+<p>不是"你懂很多"，而是<strong>"你能看穿别人看不懂的东西"</strong>。</p>
+<p><strong>梓灵式场景：</strong></p>
+<p>一个老板做了一个课程，不知道怎么卖：</p>
+<p>"我这个课程讲职场沟通，应该卖给谁？"</p>
+<p>你看一眼课程大纲：</p>
+<p>"这个课程不是卖给小白的，是卖给已经做到中层管理、但发现'会做事'不等于'会带人'的人。你的真实价值不是教沟通技巧，是帮他们'从个人贡献者转型为团队领导者'。定价9800，主打'避免3年弯路'。"</p>
+<p><strong>这就是你的洞察力：你能看见别人自己都没意识到的真实价值。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">能力3｜表达力 87分（前13%）｜你能把复杂的翻译成一句话</h3>
+<p><strong>什么是表达力？</strong></p>
+<p>不是"你会说话"，而是<strong>"你能把一个复杂的东西翻译成一句让人记住的话"</strong>。</p>
+<p><strong>梓灵式场景：</strong></p>
+<p>一个文旅项目创始人讲了半小时他的项目理念：</p>
+<p>"我们想做一个结合当地文化、可持续发展、链接城市与乡村的……"</p>
+<p>你听完直接给他翻译：</p>
+<p>"你其实是在做'城市精英的第二故乡'。一句话：让城市人在这里找到根，但不用放弃城市生活。"</p>
+<p>老板听完："对！就是这个意思！"</p>
+<p><strong>这就是你的表达力：你能把别人说不清的，翻译成一句话的卖点。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">能力4｜共情力 84分（前16%）｜你能站在不同人的立场思考</h3>
+<p><strong>什么是共情力？</strong></p>
+<p>不是"你很善良"，而是<strong>"你能快速切换到不同人的视角，看见他们真正在乎什么"</strong>。</p>
+<p><strong>梓灵式场景：</strong></p>
+<p>一个品牌想做高端女性市场，老板问你：</p>
+<p>"我们应该主打什么？"</p>
+<p>你的回答不是泛泛的"品质、美学、服务"，而是：</p>
+<p>"30岁女性在乎'我值得更好的'，她们买的是自我认可；</p>
+<p>40岁女性在乎'不再委屈自己'，她们买的是情绪出口；</p>
+<p>50岁女性在乎'我还可以很美'，她们买的是时间对抗权。</p>
+<p>同一个产品,针对不同年龄段,文案、定价、渠道都要变。"</p>
+<p><strong>这就是你的共情力：你能看见不同人群的真实需求,而不是表面需求。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">能力5｜领导力 73分（前27%）｜你不管人,但你影响决策</h3>
+<p><strong>什么是你的领导力？</strong></p>
+<p>不是"你能带团队"，而是<strong>"你的判断力能影响别人的决策"</strong>。</p>
+<p><strong>梓灵式场景：</strong></p>
+<p>一个团队在开会讨论一个项目要不要做，吵了2小时没结论。</p>
+<p>你没参与讨论，但最后老板问你一句：</p>
+<p>"你觉得呢？"</p>
+<p>你说：</p>
+<p>"这个项目的价值是清晰的，但你们团队现在没有能接住这个项目的执行配置。要么先找一个靠谱的执行负责人，要么暂缓3个月等团队ready。现在强推，大概率做成半成品。"</p>
+<p>老板听完："好，那就先找人。"</p>
+<p><strong>这就是你的领导力：不是管人，是用判断力定方向。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">能力6｜行动力 71分（前29%）｜你不是执行型选手</h3>
+<p><strong>这是你的短板。</strong></p>
+<p>你不是那种"想到就立刻去干"的人。你容易卡在"想得太多、做得太慢"的循环里。</p>
+<p><strong>但这不是问题，前提是你知道怎么处理：</strong></p>
+<ol>
+<li>**找一个执行力强的搭档**：你负责看、判断、定价，他负责做、落地、交付</li>
+<li>**或者把你的判断直接卖给有执行团队的老板**：你不需要自己做全套，你只需要把"这个项目该怎么做"说清楚，然后收咨询费</li>
+<li>**给自己设一个"最小可售卖单元"**：别想着做完整方案，先做一个"3小时诊断服务"，定价5000，测试你的价值翻译能力</li>
+</ol>
+<p><strong>记住：你不是全能型选手，你是'看准了、说清楚、定好价'的专家。别自己干全套。</strong></p>
+</section>
+
+<section id="s10b" class="section">
+  <h2>能力对比图｜你和平均水平的差距</h2>
+  <p class="lead">让你看见你到底强在哪里</p>
+  <div style="height:380px;position:relative">
+    <canvas id="barChart"></canvas>
+  </div>
+  <p style="margin-top:18px;color:#766454;font-size:14px">横轴:能力项 | 纵轴:分数(0-100)</p>
+</section>
+
+<section id="s11" class="section">
+<h2>Section 11｜天赋显化指数：你的天赋能不能被看见？</h2>
+<p class="lead">先说结论：81分，你的天赋不是藏着的，而是能被看见的</p>
+<p>你的天赋显化指数是81分。</p>
+<p>这意味着：<strong>你的天赋不是藏着的，而是能被看见的。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">为什么你的天赋容易被看见？</h3>
+<p>你有三大显形通道：</p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">通道1：金星第9宫</h4>
+<p>你的审美、判断、价值观，可以通过课程、内容、咨询、传播被看见。</p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">通道2：水星双子第8宫</h4>
+<p>你对资源、利益、信任的洞察，可以通过深度咨询、财富规划、高客单服务被看见。</p>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">通道3：木星第2宫</h4>
+<p>你的财富判断力、资源整合能力，可以通过实际成交、客户见证被看见。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">所以呢？</h3>
+<p><strong>这意味着：你不需要藏着掖着，越大方展示你的审美判断和表达能力，越容易吸引到对的人和对的项目。</strong></p>
+</section>
+
+<section id="s12" class="section">
+<h2>Section 12｜现实承接能力：你能把想法变成钱吗？</h2>
+<p class="lead">先说结论：72分，你不缺想法，但需要更强的执行配置</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">什么是现实承接能力？</h3>
+<p>现实承接能力 = <strong>你把想法变成钱的能力。</strong></p>
+<p>具体来说：</p>
+<ul>
+<li>你能不能找到客户？</li>
+<li>你能不能报价？</li>
+<li>你能不能按时交付？</li>
+<li>你能不能持续做下去？</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你的72分意味着什么？</h3>
+<p>你的72分意味着：<strong>你有7成的落地能力，但还缺3成的执行配置。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">怎么办？</h3>
+<p><strong>建议你找一个执行力强的搭档，或者给自己配一个项目管理工具。</strong></p>
+<p>具体来说：</p>
+<ol>
+<li>找一个能处理流程、合同、交付的搭档</li>
+<li>给自己配一个项目管理工具（Notion/飞书/Trello）</li>
+<li>把你的服务标准化成"流程+工具+模板"</li>
+</ol>
+<p><strong>你不需要自己做全套，你只需要把"这个项目该怎么做"说清楚，然后收咨询费。</strong></p>
+</section>
+
+<section id="s13" class="section">
+<h2>Section 13｜人生剧本总分：你的盘好不好？</h2>
+<p class="lead">先说结论：79分，你的盘不是完美盘，但是好用盘</p>
+<p>你的人生剧本总分是：<strong>79分</strong></p>
+<p>这个分数来自四大维度：</p>
+<ul>
+<li>幸运指数84分</li>
+<li>主能力86分</li>
+<li>承接能力72分</li>
+<li>显化能力81分</li>
+<li>减去风险扣分</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">79分意味着什么？</h3>
+<p><strong>你的盘不是完美盘，但是好用盘。</strong></p>
+<p>你不是"随便一走就开挂"，你是：</p>
+<ul>
+<li>方向对了，资源、机会和贵人会逐步靠近</li>
+<li>方向错了，越努力越累</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">所以呢？</h3>
+<p><strong>你的人生要顺起来，第一步不是更努力，而是走对方向。</strong></p>
+<p>什么是对的方向？</p>
+<ul>
+<li>跨界、学习、传播、远方、课程、咨询、高认知客户</li>
+<li>审美、洞察、表达、共情、价值翻译、信任成交</li>
+</ul>
+<p>什么是错的方向？</p>
+<ul>
+<li>窝在小圈子、低端事务、重复日常、低价消耗、无判断权的岗位</li>
+</ul>
+</section>
+
+<section id="s13b" class="section">
+  <h2>人生维度得分趋势图</h2>
+  <p class="lead">从能力、幸运、承接到风险的完整画像</p>
+  <div style="height:360px;position:relative">
+    <canvas id="lineChart"></canvas>
+  </div>
+  <p style="margin-top:18px;line-height:1.88">这张图让你看见:你的主能力很强(86分),幸运指数也不错(84分),但现实承接能力(72分)还有提升空间。也就是说,你不缺能力和机会,你需要更好的执行配置。</p>
+</section>
+
+<section id="s14" class="section">
+<h2>Section 14｜风险雷达：你的四大风险是什么？</h2>
+<div style="margin:24px 0">
+  <p class="lead">四大风险权重分布</p>
+  <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:28px;align-items:center">
+    <div style="height:320px;position:relative">
+      <canvas id="pieChart"></canvas>
+    </div>
+    <div>
+      <p style="margin:0 0 14px;line-height:1.88"><strong style="color:#DC143C">破财风险(35%)</strong>是你的最大风险点。情绪化投资、熟人合作不立合同、不敢追债,这三个坑你最容易踩。</p>
+      <p style="margin:0 0 14px;line-height:1.88"><strong style="color:#B88746">婚恋风险(25%)</strong>排第二。容易被强势的人吸引,然后为了关系一直妥协。</p>
+      <p style="margin:0;line-height:1.88">事业风险(22%)和健康风险(18%)相对较轻,但也需要警惕低价消耗和情绪内耗。</p>
+    </div>
+  </div>
+</div>
+
+<p class="lead">先说结论：钱、关系、合作必须先立边界</p>
+<p>你的四大风险：</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">风险1｜破财风险</h3>
+<p><strong>早期信号：</strong></p>
+<ul>
+<li>被"高回报故事"刺激</li>
+<li>跟着熟人投资，但不看合同</li>
+<li>因为关系不好意思追债</li>
+</ul>
+<p><strong>错误反应：</strong></p>
+<ul>
+<li>情绪化投资：听朋友说"这个项目很赚"就投了</li>
+<li>用关系替代合同：相信"我们是朋友，不需要合同"</li>
+<li>不敢追债：钱借出去了，但不好意思要</li>
+</ul>
+<p><strong>正确处理：</strong></p>
+<ul>
+<li>投资必须看规则，不看感觉</li>
+<li>钱的事必须有合同，不管关系多好</li>
+<li>该追的债要追，不要因为关系不好意思</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">风险2｜婚恋风险</h3>
+<p><strong>早期信号：</strong></p>
+<ul>
+<li>被强势的人吸引，但发现对方太冲、太急、太自我</li>
+<li>为了维持关系，一直妥协、一直付出</li>
+<li>对方不尊重你的学习、表达、跨界机会</li>
+</ul>
+<p><strong>错误反应：</strong></p>
+<ul>
+<li>情绪勒索后妥协：对方说"你不爱我了"，你就放弃自己的追求</li>
+<li>为了关系放弃成长：不敢讲课、不敢出去、不敢接高价值客户</li>
+<li>用关系替代价值：对方不愿意为你的专业买单，但你一直免费付出</li>
+</ul>
+<p><strong>正确处理：</strong></p>
+<ul>
+<li>先立边界，再谈感情</li>
+<li>不尊重你成长的人，不是对的人</li>
+<li>只谈感情不谈价值的关系，要警惕</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">风险3｜事业风险</h3>
+<p><strong>早期信号：</strong></p>
+<ul>
+<li>一直做低价高消耗服务，客户要求多、预算低、边界差</li>
+<li>明明能做高价值咨询，却不好意思定高价</li>
+<li>被困在熟悉的小环境里，不敢走出去</li>
+</ul>
+<p><strong>错误反应：</strong></p>
+<ul>
+<li>低价讨好：为了"积累客户"，收费500做一次咨询</li>
+<li>不敢定高价：怕别人觉得贵，怕自己不够专业</li>
+<li>窝在小圈子：不敢出去见高认知人群，不敢讲课、不敢写内容</li>
+</ul>
+<p><strong>正确处理：</strong></p>
+<ul>
+<li>立刻停止低价高消耗服务</li>
+<li>重新定价：把咨询定价提到3000-5000/次</li>
+<li>主动跨界：争取一次讲课、分享、出场的机会</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">风险4｜健康风险</h3>
+<p><strong>早期信号：</strong></p>
+<ul>
+<li>因为关系压力、钱的焦虑、安全感缺失，内耗严重</li>
+<li>睡眠质量差、情绪不稳定、容易疲惫</li>
+<li>长期待在低价值环境里，越来越没有光</li>
+</ul>
+<p><strong>错误反应：</strong></p>
+<ul>
+<li>硬扛：觉得"再坚持一下就好了"</li>
+<li>不敢休息：怕自己一休息就没机会了</li>
+<li>不敢换环境：怕换了环境更糟</li>
+</ul>
+<p><strong>正确处理：</strong></p>
+<ul>
+<li>立刻换环境：离开低价值客户、低认知人群、消耗型关系</li>
+<li>给自己设边界：每天工作不超过8小时，每周至少休息1天</li>
+<li>找到高价值客户：你的健康会随着客户质量提升而提升</li>
+</ul>
+</section>
+
+<section id="s15" class="section">
+<h2>Section 15｜人生暗礁TOP3：你容易踩的三个坑</h2>
+<p class="lead">先说结论：价值感迷失、关系过度付出、执行力不足</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">暗礁1｜价值感迷失</h3>
+<p><strong>什么意思？</strong></p>
+<p>你明明有判断力、审美力、洞察力，但你会怀疑：</p>
+<ul>
+<li>我这样收费会不会太贵？</li>
+<li>我真的够专业吗？</li>
+<li>别人会不会不认可我？</li>
+</ul>
+<p><strong>为什么会踩坑？</strong></p>
+<p>金星刑土星，会让你在价值表达时遇到现实压力。你会怀疑自己的价值，会因为安全感焦虑而不敢定高价。</p>
+<p><strong>怎么避开？</strong></p>
+<p><strong>记住一句话：你越不好意思定价，越容易吸引消耗你的人。你越清楚自己的价值，越容易遇到尊重你的人。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">暗礁2｜关系过度付出</h3>
+<p><strong>什么意思？</strong></p>
+<p>你很容易因为信任、人情、熟人关系放松边界：</p>
+<ul>
+<li>朋友找你咨询，你免费做了</li>
+<li>对方说"我们是朋友，不需要合同"，你就信了</li>
+<li>为了维持关系，你一直付出，但对方从不买单</li>
+</ul>
+<p><strong>为什么会踩坑？</strong></p>
+<p>太阳水星第8宫，木星冥王第2宫，对资源绑定很敏感。你会把关系看得很重，会因为关系放松边界。</p>
+<p><strong>怎么避开？</strong></p>
+<p><strong>记住一句话：钱的事必须有合同，不管关系多好。只谈感情不谈价值的关系，要警惕。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">暗礁3｜执行力不足</h3>
+<p><strong>什么意思？</strong></p>
+<p>你很会判断、很会看、很会说，但你容易卡在"想得太多、做得太慢"的循环里。</p>
+<p><strong>为什么会踩坑？</strong></p>
+<p>行动力71分，不是执行型选手。你需要时间思考、需要安全感、需要确定性，所以不是"想到就立刻去干"的人。</p>
+<p><strong>怎么避开？</strong></p>
+<p><strong>记住一句话：别自己干全套，找一个执行力强的搭档，或者把你的判断直接卖给有执行团队的老板。</strong></p>
+</section>
+
+<section id="s16" class="section">
+<h2>Section 16｜行动黑洞：你容易卡在哪里？</h2>
+<p class="lead">先说结论：你容易卡在"想得太多，做得太慢"</p>
+<p>你的行动黑洞是：<strong>想得太多，做得太慢。</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">常见症状</h3>
+<ul>
+<li>明明看见机会了，但会先停下来怀疑</li>
+<li>想做一个服务，但觉得"我还没准备好"</li>
+<li>想定高价，但怕"别人觉得贵"</li>
+<li>想出去讲课，但担心"我不够权威"</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">针对你的破局方法</h3>
+<p><strong>把每个想法都先做成一个"可售卖的最小单元"。</strong></p>
+<p>比如：</p>
+<ul>
+<li>你想做文旅项目策划，别先想着做完整方案，先做一个"3小时品牌诊断服务"，定价5000，找3个客户测试</li>
+<li>你想做课程，别先想着做一个完整的课程体系，先做一个"3小时工作坊"，定价1500/人，找10个人测试</li>
+<li>你想做咨询，别先想着"我还不够专业"，先做3个免费咨询，收集客户反馈，然后开始收费</li>
+</ul>
+<p><strong>这样你就能快速验证自己的价值翻译能力，而不是卡在"我还没准备好"的死循环里。</strong></p>
+</section>
+
+<section id="s17" class="section">
+<h2>Section 17｜情绪护栏：你的情绪黑洞是什么？</h2>
+<p class="lead">先说结论：你的情绪不是崩溃型，而是内耗型</p>
+<p>你的情绪不是崩溃型（爆发、失控、大哭），而是<strong>内耗型</strong>（反复想、怀疑、焦虑）。</p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">你的三大情绪黑洞</h3>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">情绪黑洞1｜价值感怀疑</h4>
+<p><strong>触发场景：</strong></p>
+<ul>
+<li>客户说"太贵了"</li>
+<li>有人质疑你的专业性</li>
+<li>对比别人觉得自己不够好</li>
+</ul>
+<p><strong>内耗模式：</strong></p>
+<ul>
+<li>我这样收费会不会太贵？</li>
+<li>我真的够专业吗？</li>
+<li>别人会不会不认可我？</li>
+</ul>
+<p><strong>破局方法：</strong></p>
+<ul>
+<li>立刻找3个认可你的客户要反馈</li>
+<li>写下你过去帮助过的人、做过的事</li>
+<li>记住：说你贵的人，不是你的目标客户</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">情绪黑洞2｜关系过度消耗</h4>
+<p><strong>触发场景：</strong></p>
+<ul>
+<li>朋友找你免费咨询，你不好意思拒绝</li>
+<li>对方说"我们是朋友，不需要谈钱"</li>
+<li>为了维持关系，你一直付出但对方从不买单</li>
+</ul>
+<p><strong>内耗模式：</strong></p>
+<ul>
+<li>我是不是太计较了？</li>
+<li>如果我拒绝，会不会伤感情？</li>
+<li>这段关系到底值不值得继续？</li>
+</ul>
+<p><strong>破局方法：</strong></p>
+<ul>
+<li>立刻停止免费咨询：朋友找你，也要收费（可以打折，但不能免费）</li>
+<li>记住：只谈感情不谈价值的关系，不是真关系</li>
+<li>你越清楚边界，越容易遇到尊重你的人</li>
+</ul>
+<h4 style="font-size:16px;margin:14px 0 8px;font-weight:600">情绪黑洞3｜完美主义拖延</h4>
+<p><strong>触发场景：</strong></p>
+<ul>
+<li>想做一个服务，但觉得"我还没准备好"</li>
+<li>想定高价，但怕"自己不够专业"</li>
+<li>想出去讲课，但担心"讲得不够好"</li>
+</ul>
+<p><strong>内耗模式：</strong></p>
+<ul>
+<li>我还需要再学习一下</li>
+<li>等我再准备准备</li>
+<li>等我更专业一点再说</li>
+</ul>
+<p><strong>破局方法：</strong></p>
+<ul>
+<li>立刻做一个"可售卖的最小单元"：3小时诊断、1500元工作坊、5000元咨询</li>
+<li>不要等"准备好"，先做3个免费测试，然后立刻收费</li>
+<li>记住：你不是要做到完美，你是要先做出来</li>
+</ul>
+</section>
+
+<section id="s18" class="section">
+<h2>Section 18｜90天行动路线图：接下来90天，你要干什么？</h2>
+<p class="lead">先说结论：不给你宏观任务，给你具体任务</p>
+<p>不给你"建立个人品牌""开始接客户"这种宏观任务。</p>
+<p>给你"做一个专栏，写3篇文章""定价3000-5000，接5个付费客户"这种具体任务。</p>
+<p>每个任务都是<strong>可执行的、有验收标准的、能看见结果的</strong>。</p>
+<p class="lead">第一个30天｜破冰期：让3个人付钱给你</p>
+<p><strong>核心目标：验证你的"价值翻译能力"能不能卖钱</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务1：做一个"梓灵的价值诊断"服务包（3天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>一个服务说明文档（1页A4纸）</li>
+<li>写清楚：你提供什么服务、适合谁、怎么做、交付什么、收费多少</li>
+<li>定价：3000-5000/次（3小时）</li>
+<li>服务内容：帮对方看一个项目/品牌/产品，给出"定位+定价+目标人群"的诊断报告</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>你能用一句话说清楚"我是做什么的"</li>
+<li>朋友看完能听懂"你是干嘛的"</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务2：做一个"梓灵的价值翻译力"专栏（10天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>写3篇文章，每篇1500-2000字</li>
+<li>每篇讲一个你帮别人"看见价值、定价格"的真实案例</li>
+<li>标题格式：《XXX花了3万做了一个项目，我告诉她为什么只能卖800，而不是她想的5000》</li>
+</ul>
+<p><strong>发布渠道：</strong></p>
+<ul>
+<li>公众号/小红书/朋友圈（选一个你最舒服的）</li>
+<li>不要求阅读量，只要求"写出来、让人能看到"</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>3篇文章写完，发出去</li>
+<li>至少有5个人看完后来问你"你能帮我看看我的项目吗"</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务3：找3个项目，免费做诊断（20天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>找3个朋友/朋友的朋友，有项目/品牌/产品的</li>
+<li>免费帮他们做一次"价值诊断"（3小时/次）</li>
+<li>每次做完，写一个简单的诊断报告（1-2页）</li>
+<li>报告内容：这个项目的真实价值是什么、应该卖给谁、怎么定价、为什么</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>3个项目都做完</li>
+<li>每次做完问对方："你觉得我最大的价值是什么？"</li>
+<li>把对方的回答记下来（这是你后续写文案的素材）</li>
+</ul>
+<p class="lead">第二个30天｜验证期：收到第一笔5000块</p>
+<p><strong>核心目标：验证有人愿意为你的判断力付钱</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务4：开始收费，接5个付费客户（30天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>把你的"价值诊断"服务开始收费</li>
+<li>定价：3000-5000/次（不要低于3000）</li>
+<li>目标：30天内接5个付费客户</li>
+</ul>
+<p><strong>客户来源：</strong></p>
+<ul>
+<li>前3个免费诊断的客户转介绍</li>
+<li>看过你文章的人</li>
+<li>朋友圈/社群里的人</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>收到第一笔钱（哪怕只有3000）</li>
+<li>完成5个付费项目</li>
+<li>每次做完,问客户："如果让你推荐我给朋友,你会怎么介绍我？"（记下来）</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务5：收集5个"客户证言"（30天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>每做完一个付费项目，问客户要一个"使用感受"</li>
+<li>格式：客户是谁（行业/身份）+ 他找你解决什么问题 + 你帮他看到了什么 + 他的评价</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>收集到5个客户证言</li>
+<li>整理成一个"客户评价合集"（发朋友圈/公众号）</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务6：优化你的服务流程（30天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>把你做5次诊断的经验总结成一个"标准流程"</li>
+<li>流程包括：接单前问什么问题、诊断时看什么、报告怎么写、交付时怎么说</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>写一个"服务流程SOP"（1-2页）</li>
+<li>下次再接单时，照着这个流程走，效率明显提高</li>
+</ul>
+<p class="lead">第三个30天｜迭代期：测试"价值翻译力工作坊"</p>
+<p><strong>核心目标：把你的判断力从"一对一服务"升级为"一对多产品"</strong></p>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务7：把你的服务打磨成一个"标准化产品"（10天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>根据前面5-10个客户的反馈，把你的服务打磨成一个标准化产品</li>
+<li>产品名称：《梓灵的价值翻译诊断》</li>
+<li>服务说明书：1页A4纸，写清楚"你提供什么、适合谁、怎么做、交付什么、收费多少"</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>服务说明书写完，发给3个朋友看，问他们"看懂了吗"</li>
+<li>如果看懂了，就可以开始推广了</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务8：测试"价值翻译力工作坊"（20天内完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>设计一个3小时的小班课："如何给你的项目定价？"</li>
+<li>内容：教大家怎么"看见价值、定义价格、找到买家"</li>
+<li>形式：线上/线下，3-5人小班</li>
+<li>定价：1000-1500/人</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>至少开一次工作坊，哪怕只有3个人</li>
+<li>做完后问参与者："你觉得这个工作坊最大的价值是什么？"</li>
+<li>根据反馈决定：这个形式能不能做、要不要继续</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">任务9：写一个"90天复盘"（最后1天完成）</h3>
+<p><strong>具体交付物：</strong></p>
+<ul>
+<li>写一篇复盘文章："我用90天验证了'价值翻译力'能不能卖钱"</li>
+<li>内容：你做了什么、遇到了什么问题、解决了什么、下一步要做什么</li>
+</ul>
+<p><strong>验收标准：</strong></p>
+<ul>
+<li>文章写完，发出去</li>
+<li>给自己一个明确的结论："价值翻译力"这个定位，能不能继续走下去</li>
+</ul>
+<h3 style="font-size:18px;margin:18px 0 10px;color:#4B2E18">📊 90天验收标准总结</h3>
+<table>
+<tr><th>时间节点</th><th>核心目标</th><th>验收标准</th></tr>
+<tr><td>**30天**</td><td>验证能力</td><td>写3篇文章、做3个免费诊断、有5个人来咨询</td></tr>
+<tr><td>**60天**</td><td>验证付费</td><td>接5个付费客户、收到第一笔5000块、收集5个客户证言</td></tr>
+<tr><td>**90天**</td><td>验证规模化</td><td>标准化服务流程、测试工作坊、写90天复盘</td></tr>
+</table>
+<p><strong>90天后，你应该能回答这3个问题：</strong></p>
+<ol>
+<li>我的"价值翻译力"能不能卖钱？（能）</li>
+<li>我的服务形式是什么？（一对一诊断 or 工作坊 or 两者结合）</li>
+<li>我下一步要做什么？（继续接单 or 做成课程 or 招学员）</li>
+</ol>
+</section>
+
+<section id="s19" class="section">
+<h2>Section 19｜一页人生执行卡</h2>
+<table>
+<tr><th>模块</th><th>你的答案</th></tr>
+<tr><td>主身份</td><td>金星人 · 跨界价值顾问</td></tr>
+<tr><td>幸运入口</td><td>1飞9：知识、远方、课程、跨界、传播</td></tr>
+<tr><td>最强能力</td><td>审美力91、洞察力89、表达力87、共情力84</td></tr>
+<tr><td>最适合岗位</td><td>高客单顾问、财富规划、课程主理人、文旅策划、品牌顾问</td></tr>
+<tr><td>最适合行业</td><td>咨询、金融投资、教育培训、文旅旅游、审美生活方式</td></tr>
+<tr><td>财富方式</td><td>顾问收入、信任成交、知识产品、资源整合、审美溢价</td></tr>
+<tr><td>关系要求</td><td>成熟稳定、尊重边界、有行动力、能谈钱谈未来</td></tr>
+<tr><td>风险红线</td><td>情绪化投资、人情合作、低价消耗</td></tr>
+<tr><td>90天重点</td><td>定义服务、提高定价、跨界出场</td></tr>
+</table>
+<p># 最后一句话</p>
+<p>梓灵，你不是来低价证明自己的人。</p>
+<p>你的人生要顺起来，第一步不是更努力，而是敢承认：</p>
+<div class="quote">**你的判断、审美、关系理解和价值表达，本来就应该有价格。**</div>
+<p><strong>PRISM 人生剧本 · 击中版</strong></p>
+<p><strong>为梓灵定制 · 2026-07-10</strong></p>
+</section>
+
+  </main>
+
+  <footer class="footer">PRISM 人生剧本 · 梓灵 · 击中版 V4.6</footer>
+
+  <script>
+    // 1. 雷达图 - 六大能力
+    const radarCtx = document.getElementById('radar');
+    if(radarCtx) {
+      new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+          labels: ['审美力', '洞察力', '表达力', '共情力', '领导力', '行动力'],
+          datasets: [{
+            label: '梓灵能力雷达',
+            data: [91, 89, 87, 84, 73, 71],
+            backgroundColor: 'rgba(184,135,70,.18)',
+            borderColor: '#B88746',
+            pointBackgroundColor: '#4B2E18',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            r: {
+              min: 60,
+              max: 100,
+              ticks: { stepSize: 10, color: '#766454', font: { size: 11 } },
+              grid: { color: '#E8D7C0' },
+              angleLines: { color: '#E8D7C0' },
+              pointLabels: { color: '#211A14', font: { size: 13, weight: 'bold' } }
+            }
+          }
+        }
+      });
+    }
+
+    // 2. 柱状图 - 能力对比
+    const barCtx = document.getElementById('barChart');
+    if(barCtx) {
+      new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: ['审美力', '洞察力', '表达力', '共情力', '领导力', '行动力'],
+          datasets: [
+            {
+              label: '你的分数',
+              data: [91, 89, 87, 84, 73, 71],
+              backgroundColor: '#B88746',
+              borderRadius: 6
+            },
+            {
+              label: '平均水平',
+              data: [70, 70, 70, 70, 70, 70],
+              backgroundColor: '#E8D7C0',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true,
+              position: 'top',
+              labels: { color: '#766454', font: { size: 13 } }
+            }
+          },
+          scales: {
+            y: {
+              min: 60,
+              max: 100,
+              ticks: { stepSize: 10, color: '#766454' },
+              grid: { color: '#E8D7C0' }
+            },
+            x: {
+              ticks: { color: '#211A14', font: { size: 12, weight: 'bold' } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 3. 折线图 - 人生维度得分
+    const lineCtx = document.getElementById('lineChart');
+    if(lineCtx) {
+      new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: ['主能力', '幸运指数', '天赋显化', '人生总分', '现实承接', '风险扣分'],
+          datasets: [{
+            label: '梓灵人生维度',
+            data: [86, 84, 81, 79, 72, -8],
+            borderColor: '#B88746',
+            backgroundColor: 'rgba(184,135,70,.1)',
+            pointBackgroundColor: '#4B2E18',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              min: -20,
+              max: 100,
+              ticks: { stepSize: 20, color: '#766454' },
+              grid: { color: '#E8D7C0' }
+            },
+            x: {
+              ticks: { color: '#211A14', font: { size: 12, weight: 'bold' } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    
+    // 新增: 横向条形图 - 能力评估
+    const horizontalBarCtx = document.getElementById('horizontalBar');
+    if(horizontalBarCtx) {
+      new Chart(horizontalBarCtx, {
+        type: 'bar',
+        data: {
+          labels: ['审美力', '洞察力', '表达力', '共情力', '领导力', '行动力'],
+          datasets: [{
+            label: '你的能力分数',
+            data: [91, 89, 87, 84, 73, 71],
+            backgroundColor: ['#B88746', '#D8B06A', '#C98F7A', '#B88746', '#D8B06A', '#C98F7A'],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              min: 60,
+              max: 100,
+              ticks: { stepSize: 10, color: '#766454' },
+              grid: { color: '#E8D7C0' }
+            },
+            y: {
+              ticks: { color: '#211A14', font: { size: 13, weight: 'bold' } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 新增: 职业匹配度雷达图
+    const careerRadarCtx = document.getElementById('careerRadar');
+    if(careerRadarCtx) {
+      new Chart(careerRadarCtx, {
+        type: 'radar',
+        data: {
+          labels: ['跨界价值顾问', '高客单咨询', '品牌内容策划', '文旅项目策划', '课程产品设计', '财富规划顾问', '高端客户关系'],
+          datasets: [{
+            label: '职业匹配度',
+            data: [95, 92, 88, 90, 87, 89, 86],
+            backgroundColor: 'rgba(184,135,70,.15)',
+            borderColor: '#B88746',
+            pointBackgroundColor: '#4B2E18',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 2.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            r: {
+              min: 70,
+              max: 100,
+              ticks: { stepSize: 10, color: '#766454', font: { size: 10 } },
+              grid: { color: '#E8D7C0' },
+              angleLines: { color: '#E8D7C0' },
+              pointLabels: { color: '#211A14', font: { size: 11, weight: 'bold' } }
+            }
+          }
+        }
+      });
+    }
+
+    // 新增: 财富方式占比饼图
+    const wealthPieCtx = document.getElementById('wealthPie');
+    if(wealthPieCtx) {
+      new Chart(wealthPieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['顾问型收入', '信任型成交', '知识型产品', '审美型溢价', '资源整合'],
+          datasets: [{
+            data: [30, 25, 20, 15, 10],
+            backgroundColor: ['#B88746', '#D8B06A', '#C98F7A', '#E8D7C0', '#FFF6E8'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { 
+                color: '#211A14',
+                font: { size: 12, weight: 'bold' },
+                padding: 12,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 新增: 幸运入口漏斗图(堆叠柱状图)
+    const luckyFunnelCtx = document.getElementById('luckyFunnel');
+    if(luckyFunnelCtx) {
+      new Chart(luckyFunnelCtx, {
+        type: 'bar',
+        data: {
+          labels: ['命主星飞宫', '命主星状态', '风险扣分', '最终幸运指数'],
+          datasets: [{
+            label: '分数',
+            data: [85, 5, -6, 84],
+            backgroundColor: ['#B88746', '#D8B06A', '#DC143C', '#4B2E18'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              min: -10,
+              max: 100,
+              ticks: { stepSize: 20, color: '#766454' },
+              grid: { color: '#E8D7C0' }
+            },
+            x: {
+              ticks: { color: '#211A14', font: { size: 12, weight: 'bold' } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 4. 饼状图 - 风险权重分布
+    const pieCtx = document.getElementById('pieChart');
+    if(pieCtx) {
+      new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['破财风险', '婚恋风险', '事业风险', '健康风险'],
+          datasets: [{
+            data: [35, 25, 22, 18],
+            backgroundColor: ['#DC143C', '#B88746', '#D8B06A', '#E8D7C0'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { 
+                color: '#211A14',
+                font: { size: 13, weight: 'bold' },
+                padding: 15,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+/* Planet character showcase — profile cards (Personality / Traits / Strengths) */
+.pc-section {
+  --pc-gold: #e8c27e;
+  --pc-cream: #f5f0e8;
+  width: 100%;
+  margin-top: 48px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(232, 194, 126, 0.12);
+}
+
+.pc-header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding: 0 4px;
+}
+
+.pc-eyebrow {
+  margin: 0 0 8px;
+  font-size: 10px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: rgba(232, 194, 126, 0.45);
+  font-family: "Cinzel", "Times New Roman", serif;
+}
+
+.pc-title {
+  margin: 0 0 10px;
+  font-family: "Cinzel", "Noto Serif SC", serif;
+  font-size: clamp(22px, 5.5vw, 28px);
+  font-weight: 700;
+  letter-spacing: 4px;
+  background: linear-gradient(180deg, #e8c27e 0%, #b38741 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.pc-subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: 0.5px;
+  color: rgba(245, 240, 232, 0.42);
+}
+
+.pc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pc-card {
+  padding: 18px 18px 20px;
+  border-radius: 14px;
+  background: linear-gradient(
+    165deg,
+    rgba(18, 18, 22, 0.95) 0%,
+    rgba(8, 8, 12, 0.98) 100%
+  );
+  border: 1px solid rgba(232, 194, 126, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pc-card:hover {
+  border-color: color-mix(in srgb, var(--pc-accent) 45%, rgba(232, 194, 126, 0.4));
+  box-shadow:
+    0 0 28px color-mix(in srgb, var(--pc-accent) 12%, transparent),
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.pc-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.pc-card-visual {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 50% 30%,
+    color-mix(in srgb, var(--pc-accent) 22%, #111) 0%,
+    #0a0a0a 100%
+  );
+  border: 1px solid rgba(232, 194, 126, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.pc-card-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.pc-card-name {
+  margin: 0;
+  font-family: "Cinzel", "Noto Serif SC", serif;
+  font-size: clamp(18px, 4.5vw, 22px);
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--pc-gold);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--pc-accent) 25%, transparent);
+}
+
+.pc-card-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pc-block {
+  margin: 0;
+}
+
+.pc-block-label {
+  margin: 0 0 6px;
+  font-family: "Cinzel", "Noto Serif SC", serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--pc-gold);
+}
+
+.pc-block-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  letter-spacing: 0.2px;
+  color: rgba(245, 240, 232, 0.72);
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .pc-card {
+    padding: 22px 24px 24px;
+  }
+
+  .pc-card-visual {
+    width: 72px;
+    height: 72px;
+  }
+
+  .pc-block-text {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+}
+
+@media (min-width: 768px) {
+  .pc-section {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
