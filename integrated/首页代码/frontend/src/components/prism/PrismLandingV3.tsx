@@ -25,12 +25,12 @@ export default function PrismLandingV3({ onStart, questionCount = 20 }: PrismLan
             <div className="v3-hero-visual">
               <div className="v3-texture" aria-hidden />
               <div className="v3-portrait">
-                <img src="/images/luodao-halfbody-v2.png" alt="罗导" />
+                <img src="/images/luodao-halfbody-v2.png?v=20260720" alt="Judica Heventh" />
               </div>
             </div>
 
             <div className="v3-hero-info">
-              <h1 className="v3-name">罗导</h1>
+              <h1 className="v3-name">Judica Heventh</h1>
               <p className="v3-title">占星学领军人物</p>
               <div className="v3-credentials">
                 <span>天赋星球创始人</span>

@@ -29,7 +29,7 @@ export default function PrismLandingV3({ onStart, questionCount = 20 }: PrismLan
             <div className="v3-hero-visual">
               <div className="v3-texture" aria-hidden />
               <div className="v3-portrait">
-                <img src="/images/luodao-halfbody-v2.png" alt={t("landingExpertName")} />
+                <img src="/images/luodao-halfbody-v2.png?v=20260720" alt={t("landingExpertName")} />
               </div>
             </div>
 

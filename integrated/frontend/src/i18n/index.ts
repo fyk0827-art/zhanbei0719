@@ -275,7 +275,7 @@ const translations: Record<string, Record<string, string>> = {
     reportPlanetTransformer: "Transformer",
     lifeScriptBrand: "Life Script",
     landingBrandEn: "LIFE SCRIPT",
-    landingExpertName: "Luo Dao",
+    landingExpertName: "Judica Heventh",
     landingExpertTitle: "Leading Astrology Expert",
     landingCred1: "Founder of Talent Planet",
     landingCred2: "10M+ followers worldwide",
@@ -640,7 +640,7 @@ const translations: Record<string, Record<string, string>> = {
     // Prism landing
     lifeScriptBrand: "人生剧本",
     landingBrandEn: "LIFE SCRIPT",
-    landingExpertName: "罗导",
+    landingExpertName: "Judica Heventh",
     landingExpertTitle: "占星学领军人物",
     landingCred1: "天赋星球创始人",
     landingCred2: "全网超过千万粉丝",
