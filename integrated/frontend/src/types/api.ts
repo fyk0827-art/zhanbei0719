@@ -118,6 +118,7 @@ export interface PaymentCompleteResponse {
 
 export interface PublicSettings {
   quizQuestionCount: number;
+  reportPrice: number;
 }
 
 export interface ContactResponse {

@@ -30,6 +30,7 @@ public class PaymentService {
     private final AlipayService alipay;
     private final WechatPayService wechat;
     private final ObjectMapper objectMapper;
+    private final PricingService pricingService;
 
     public PaymentService(
             PaymentRepository repo,
@@ -38,7 +39,8 @@ public class PaymentService {
             WechatPayProperties wechatProps,
             AlipayService alipay,
             WechatPayService wechat,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            PricingService pricingService
     ) {
         this.repo = repo;
         this.props = props;
@@ -47,6 +49,7 @@ public class PaymentService {
         this.alipay = alipay;
         this.wechat = wechat;
         this.objectMapper = objectMapper;
+        this.pricingService = pricingService;
     }
 
     public boolean isDatabaseUp() {
@@ -205,7 +208,7 @@ public class PaymentService {
         OrderRecord order = new OrderRecord(
                 orderId,
                 reportId,
-                props.getOrderAmount(),
+                pricingService.currentAmountCents(),
                 props.getProductTitle(),
                 channel,
                 OrderStatus.pending,

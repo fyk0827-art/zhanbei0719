@@ -556,7 +556,7 @@ export default function BlueprintReport({ chart }: Props) {
   const reportType = parseReportTypeId(
     getRouterSearchParams().get("reportType") || getGlobalReportType()
   );
-  const reportMeta = getReportTypeMeta(reportType);
+  const baseReportMeta = getReportTypeMeta(reportType);
 
   const [reportText, setReportText] = useState(
     () => loadInitialReportText(reportType) || getGlobalReportText() || ""
@@ -595,9 +595,13 @@ export default function BlueprintReport({ chart }: Props) {
     paymentMode,
     confirmingReturn,
     pollExhausted,
+    reportPrice,
     startPay,
     refresh: refreshUnlock,
   } = useReportUnlock(reportId, { reportType });
+  const reportMeta = reportPrice
+    ? { ...baseReportMeta, priceYuan: reportPrice }
+    : baseReportMeta;
 
   const isPrismLifeScript = reportType === "full" || reportType === "simple";
 
@@ -874,6 +878,7 @@ export default function BlueprintReport({ chart }: Props) {
         chart={activeChart}
         reportText={previewText}
         reportType={reportType}
+        reportMeta={reportMeta}
         isUnlocked={isUnlocked}
         paying={paying}
         payError={payError}

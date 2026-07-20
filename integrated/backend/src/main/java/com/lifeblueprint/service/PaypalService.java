@@ -26,15 +26,17 @@ public class PaypalService {
     private final DeliveryRepository delivery;
     private final PaymentRepository payments;
     private final PaymentProperties paymentProperties;
+    private final PricingService pricingService;
     private final ObjectMapper json;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
 
     public PaypalService(DeliveryConfigService config, DeliveryRepository delivery, PaymentRepository payments,
-                         PaymentProperties paymentProperties, ObjectMapper json) {
+                         PaymentProperties paymentProperties, PricingService pricingService, ObjectMapper json) {
         this.config = config;
         this.delivery = delivery;
         this.payments = payments;
         this.paymentProperties = paymentProperties;
+        this.pricingService = pricingService;
         this.json = json;
     }
 
@@ -42,8 +44,9 @@ public class PaypalService {
         Map<String, Object> report = delivery.report(reportId).orElseThrow(() -> new IllegalArgumentException("Report input not found"));
         String email = report.get("email") == null ? null : String.valueOf(report.get("email"));
         if (email == null || email.isBlank()) throw new IllegalArgumentException("A report delivery email is required");
+        int amount = pricingService.currentAmountCents();
         String internalId = PaymentRepository.newOrderId();
-        OrderRecord order = new OrderRecord(internalId, reportId, paymentProperties.getOrderAmount(),
+        OrderRecord order = new OrderRecord(internalId, reportId, amount,
             paymentProperties.getProductTitle(), "paypal", OrderStatus.pending, null, email,
             System.currentTimeMillis(), null);
         payments.upsertOrder(order);
@@ -57,7 +60,7 @@ public class PaypalService {
             "purchase_units", new Object[]{Map.of(
                 "reference_id", internalId,
                 "description", paymentProperties.getProductTitle(),
-                "amount", Map.of("currency_code", "USD", "value", String.format("%.2f", paymentProperties.getOrderAmount() / 100.0))
+                "amount", Map.of("currency_code", "USD", "value", String.format("%.2f", amount / 100.0))
             )},
             "payment_source", Map.of("paypal", Map.of("experience_context", Map.of(
                 "return_url", returnUrl, "cancel_url", cancelUrl, "user_action", "PAY_NOW", "shipping_preference", "NO_SHIPPING"
@@ -79,7 +82,7 @@ public class PaypalService {
         result.put("paypalOrderId", paypalOrderId);
         result.put("reportId", reportId);
         result.put("approvalUrl", approvalUrl);
-        result.put("amount", paymentProperties.getOrderAmount());
+        result.put("amount", amount);
         result.put("currency", "USD");
         result.put("environment", config.paypalEnvironment());
         return result;

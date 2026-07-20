@@ -5,6 +5,7 @@ import com.qacollector.dto.PublicSettingsDTO;
 import com.qacollector.dto.UpdateSettingsRequest;
 import com.qacollector.entity.AppSetting;
 import com.qacollector.repository.AppSettingRepository;
+import com.lifeblueprint.service.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ public class SettingsService {
     public static final String KEY_PAYMENT_MODE = "payment_mode";
 
     private final AppSettingRepository repository;
+    private final PricingService pricingService;
 
     public int getQuizQuestionCount() {
         return parseInt(getValue(KEY_QUIZ_QUESTION_COUNT, "20"), 20, 1, 50);
@@ -32,6 +34,7 @@ public class SettingsService {
     public PublicSettingsDTO getPublicSettings() {
         PublicSettingsDTO dto = new PublicSettingsDTO();
         dto.setQuizQuestionCount(getQuizQuestionCount());
+        dto.setReportPrice(pricingService.currentPrice());
         return dto;
     }
 

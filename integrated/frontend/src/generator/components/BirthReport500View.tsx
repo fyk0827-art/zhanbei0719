@@ -6,8 +6,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import type { NatalChart } from "../services/astrologyEngine";
-import { getReportTypeMeta } from "../types/reportTypes";
-import type { ReportTypeId } from "../types/reportTypes";
+import type { ReportTypeId, ReportTypeMeta } from "../types/reportTypes";
 import { getPaymentLabels, type PaymentMode } from "../services/paymentApi";
 import { ReportIdentitySection } from "./ReportIdentitySection";
 import { runV2Calculations } from "../services/v2ScoringEngine";
@@ -45,6 +44,7 @@ interface Props {
   chart: NatalChart;
   reportText: string;
   reportType: ReportTypeId;
+  reportMeta: ReportTypeMeta;
   isUnlocked: boolean;
   paying: boolean;
   payError: string | null;
@@ -148,6 +148,7 @@ export default function BirthReport500View({
   chart,
   reportText,
   reportType,
+  reportMeta,
   isUnlocked,
   paying,
   payError,
@@ -158,7 +159,6 @@ export default function BirthReport500View({
 }: Props) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const reportMeta = getReportTypeMeta(reportType);
   const paymentLabels = getPaymentLabels(paymentMode);
   const locale = resolveReportLocale(i18n.language);
   const name = chart.birthData.name || t("reportYou");
@@ -356,7 +356,7 @@ export default function BirthReport500View({
             className="w-full py-3.5 rounded-full font-bold text-white shadow-lg disabled:opacity-60"
             style={{ background: paymentLabels.buttonColor }}
           >
-            {paying ? paymentLabels.paying : `${paymentLabels.button} · ¥${reportMeta.priceYuan}`}
+            {paying ? paymentLabels.paying : `${paymentLabels.button} · $${reportMeta.priceYuan}`}
           </button>
           <p className="text-[10px] text-white/45 text-center mt-2">{t("reportPreviewFree")}</p>
         </div>

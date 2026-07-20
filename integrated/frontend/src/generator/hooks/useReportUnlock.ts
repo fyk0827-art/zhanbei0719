@@ -7,6 +7,7 @@ import {
   type PaymentMode,
 } from "../services/paymentApi";
 import type { ReportTypeId } from "../types/reportTypes";
+import { settingsApi } from "@/services/api";
 
 export function useReportUnlock(
   reportId: string | null,
@@ -19,6 +20,7 @@ export function useReportUnlock(
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reportPrice, setReportPrice] = useState<string | null>(null);
   const [confirmingReturn, setConfirmingReturn] = useState(false);
   const [pollExhausted] = useState(false);
   const paymentMode: PaymentMode = PAYMENT_DISABLED ? "disabled" : "paypal";
@@ -39,6 +41,18 @@ export function useReportUnlock(
   }, [reportId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    settingsApi.getPublic()
+      .then((settings) => {
+        if (!cancelled && Number.isFinite(Number(settings.reportPrice))) {
+          setReportPrice(Number(settings.reportPrice).toFixed(2));
+        }
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -96,6 +110,7 @@ export function useReportUnlock(
     paymentMode,
     confirmingReturn,
     pollExhausted,
+    reportPrice,
     startPay,
     refresh,
   };
