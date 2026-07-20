@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
+import { CircleHelp, Clock3 } from "lucide-react";
 import PrismBackground from "@/components/prism/PrismBackground";
 import PrismBrandSymbol from "@/components/prism/PrismBrandSymbol";
 import type { BirthData } from "../services/astrologyEngine";
@@ -80,10 +81,11 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
       tz = selectedLocation!.timezone;
     }
     const [year, month, day] = birthDate.split("-").map(Number);
-    const [hour, minute] = birthTime.split(":").map(Number);
+    const effectiveBirthTime = birthTimeUnknown ? "12:00" : birthTime;
+    const [hour, minute] = effectiveBirthTime.split(":").map(Number);
     setGlobalReportType("full");
     onGenerate({ year, month, day, hour, minute, latitude: lat, longitude: lng, timezone: tz, gender, name: name || undefined });
-  }, [birthDate, birthTime, selectedLocation, gender, name, onGenerate, useCustomCoords, customLat, customLng, customTz]);
+  }, [birthDate, birthTime, birthTimeUnknown, selectedLocation, gender, name, onGenerate, useCustomCoords, customLat, customLng, customTz]);
 
   if (isLoading) {
     return (
@@ -168,7 +170,7 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 mb-5 sm:flex-row">
+          <div className="flex flex-col gap-4 mb-5">
             <div className="flex-1 text-left">
               <div className="mb-2">
                 <span className="prism-font-serif text-[13px] font-semibold" style={{ color: "rgba(250,246,240,0.7)" }}>
@@ -189,18 +191,53 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
                   {t("genBirthTime")} <span style={{ color: "var(--prism-gold)" }}>*</span>
                 </span>
               </div>
-              <input
-                type="time"
-                value={birthTime}
-                onChange={(e) => setBirthTime(e.target.value)}
-                disabled={birthTimeUnknown}
-                className="prism-input"
-              />
-              <label className="mt-2 flex min-h-8 cursor-pointer items-center gap-2 text-xs" style={{ color: "rgba(250,246,240,0.55)" }}>
-                <input type="checkbox" checked={birthTimeUnknown} onChange={(e) => { setBirthTimeUnknown(e.target.checked); if (e.target.checked) setBirthTime("12:00"); }} className="h-4 w-4" />
-                I don't know my exact birth time
-              </label>
-              <p className="text-[10px] mt-1 italic" style={{ color: "rgba(232,185,81,0.35)" }}>{t("genBirthTimeHint")}</p>
+              <div className="prism-time-mode" role="radiogroup" aria-label={t("genBirthTime")}>
+                <div className="prism-time-mode-option">
+                  <input
+                    className="prism-time-mode-input"
+                    type="radio"
+                    name="birth-time-mode"
+                    id="birth-time-exact"
+                    checked={!birthTimeUnknown}
+                    onChange={() => setBirthTimeUnknown(false)}
+                  />
+                  <label className="prism-time-mode-label" htmlFor="birth-time-exact">
+                    <Clock3 size={18} aria-hidden="true" />
+                    <span>{t("genBirthTimeExact")}</span>
+                  </label>
+                </div>
+                <div className="prism-time-mode-option">
+                  <input
+                    className="prism-time-mode-input"
+                    type="radio"
+                    name="birth-time-mode"
+                    id="birth-time-unknown"
+                    checked={birthTimeUnknown}
+                    onChange={() => setBirthTimeUnknown(true)}
+                  />
+                  <label className="prism-time-mode-label" htmlFor="birth-time-unknown">
+                    <CircleHelp size={18} aria-hidden="true" />
+                    <span>{t("genBirthTimeUnknown")}</span>
+                  </label>
+                </div>
+              </div>
+
+              {!birthTimeUnknown ? (
+                <>
+                  <input
+                    type="time"
+                    value={birthTime}
+                    onChange={(e) => setBirthTime(e.target.value)}
+                    className="prism-input prism-time-input"
+                  />
+                  <p className="prism-time-hint">{t("genBirthTimeHint")}</p>
+                </>
+              ) : (
+                <div className="prism-time-unknown-note" role="status">
+                  <CircleHelp size={17} aria-hidden="true" />
+                  <span>{t("genBirthTimeUnknownHint")}</span>
+                </div>
+              )}
             </div>
           </div>
 
