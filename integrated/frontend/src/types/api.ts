@@ -119,6 +119,11 @@ export interface PaymentCompleteResponse {
 export interface PublicSettings {
   quizQuestionCount: number;
   reportPrice: number;
+  la51Enabled: boolean;
+  la51SiteId: string;
+  la51Ck: string;
+  facebookPixelEnabled: boolean;
+  facebookPixelId: string;
 }
 
 export interface ContactResponse {
@@ -137,11 +142,29 @@ export interface VerificationCodeResponse {
 export interface AdminSettings {
   quizQuestionCount: number;
   paymentMode: "mock" | "live";
+  la51Enabled: boolean;
+  la51SiteId: string;
+  la51Ck: string;
+  facebookPixelEnabled: boolean;
+  facebookPixelId: string;
 }
 
 export interface UpdateSettingsRequest {
   quizQuestionCount?: number;
   paymentMode?: "mock" | "live";
+  la51Enabled?: boolean;
+  la51SiteId?: string;
+  la51Ck?: string;
+  facebookPixelEnabled?: boolean;
+  facebookPixelId?: string;
+}
+
+export interface AdminContact {
+  email: string;
+  language: string;
+  created_at: number;
+  last_seen_at: number;
+  verified_at?: number;
 }
 
 export interface AdminOrder {

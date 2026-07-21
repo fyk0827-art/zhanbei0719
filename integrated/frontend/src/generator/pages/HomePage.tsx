@@ -13,6 +13,7 @@ import LocationPicker from "../components/LocationPicker";
 import PlanetCharactersSection from "@/components/PlanetCharactersSection";
 import "@/styles/prism.css";
 import { contactApi } from "@/services/api";
+import { trackEmailVerified, trackPersonalDetailsCompleted } from "@/services/analytics";
 import { loadBirthData, saveBirthData } from "../services/reportStore";
 
 interface Props {
@@ -131,6 +132,7 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
       sessionStorage.setItem("life_blueprint_email_verified", normalized);
       setVerifiedEmail(normalized);
       setEmailVerified(true);
+      trackEmailVerified(contact.contactId);
     } catch (error) {
       setEmailError(apiErrorMessage(error, "The verification code is invalid or expired."));
     } finally {
@@ -165,7 +167,9 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
     const [hour, minute] = effectiveBirthTime.split(":").map(Number);
     setGlobalReportType("full");
     saveBirthData({ year, month, day, hour, minute, latitude: lat, longitude: lng, timezone: tz, gender, name: name || undefined });
-    sessionStorage.setItem("life_blueprint_flow_id", crypto.randomUUID());
+    const flowId = crypto.randomUUID();
+    sessionStorage.setItem("life_blueprint_flow_id", flowId);
+    trackPersonalDetailsCompleted(flowId);
     window.location.href = "/?quiz=1";
   }, [birthDate, birthTime, birthTimeUnknown, selectedLocation, gender, name, useCustomCoords, customLat, customLng, customTz, emailVerified, email, verifiedEmail]);
 

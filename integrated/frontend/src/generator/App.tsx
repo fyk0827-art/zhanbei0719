@@ -17,6 +17,7 @@ import { calculateNatalChart } from "./services/astrologyEngine";
 import type { BirthData, NatalChart } from "./services/astrologyEngine";
 import { generatorPath } from "./utils/generatorNav";
 import { generateBirthReport500 } from "./services/birthReport500";
+import { trackPreviewReportViewed } from "@/services/analytics";
 
 let globalChart: NatalChart | null = null;
 let globalReportText: string = "";
@@ -92,6 +93,7 @@ export default function App() {
       if (!text.trim()) throw new Error(t("genReportFailed"));
 
       const { reportId } = await persistReport(text, natalChart);
+      trackPreviewReportViewed(reportId, reportType);
       setIsLoading(false);
       if (!hasNavigated.current) {
         hasNavigated.current = true;

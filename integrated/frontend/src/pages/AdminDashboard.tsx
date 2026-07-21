@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Shield, LogOut, Plus, Pencil, Trash2, Loader2, Banknote, Settings, ShoppingCart, RotateCcw, Mail, Search } from "lucide-react";
+import { Shield, LogOut, Plus, Pencil, Trash2, Loader2, Banknote, Settings, ShoppingCart, RotateCcw, Mail, Search, Users, Download } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { ageGroupApi, adminQuestionApi, answerApi, adminSettingsApi, adminOrderApi, deliverySettingsApi } from "@/services/api";
-import type { AdminQuestionDTO, CreateQuestionRequest, AgeGroup, UpdateDeliverySettings } from "@/types/api";
+import { ageGroupApi, adminQuestionApi, answerApi, adminSettingsApi, adminOrderApi, adminContactApi, deliverySettingsApi } from "@/services/api";
+import type { AdminQuestionDTO, CreateQuestionRequest, AgeGroup, UpdateDeliverySettings, AdminSettings, UpdateSettingsRequest } from "@/types/api";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
-type Tab = "questions" | "ageGroups" | "answers" | "orders" | "settings";
+type Tab = "questions" | "ageGroups" | "answers" | "orders" | "contacts" | "settings";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
 
       <div className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 sm:py-6">
         <div className="mb-6 flex gap-1 overflow-x-auto border-b border-[#E8E4DC] sm:gap-2">
-          {(["questions", "ageGroups", "answers", "orders", "settings"] as Tab[]).map((tab) => (
+          {(["questions", "ageGroups", "answers", "orders", "contacts", "settings"] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
                   : "text-[#6B6560] hover:text-[#2D2A26]"
               }`}
             >
-              {t(tab === "ageGroups" ? "ageGroups" : tab === "settings" ? "settings" : tab)}
+              {tab === "contacts" ? "Users" : t(tab === "ageGroups" ? "ageGroups" : tab === "settings" ? "settings" : tab)}
             </button>
           ))}
         </div>
@@ -79,6 +79,7 @@ export default function AdminDashboard() {
         {activeTab === "ageGroups" && <AgeGroupsTab />}
         {activeTab === "answers" && <AnswersTab />}
         {activeTab === "orders" && <OrdersTab />}
+        {activeTab === "contacts" && <ContactsTab />}
         {activeTab === "settings" && <SettingsTab />}
       </div>
     </div>
@@ -601,9 +602,63 @@ function OrdersTab() {
 }
 
 function StatusBadge({ value }: { value: string }) {
-  const success = /paid|complete|sent/i.test(value);
+  const success = /paid|complete|sent/i.test(value) || value.toLowerCase() === "verified";
   const failed = /fail|closed|refund/i.test(value);
   return <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${success ? 'bg-emerald-50 text-emerald-700' : failed ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{value}</span>;
+}
+
+function ContactsTab() {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [verified, setVerified] = useState("all");
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "contacts", page, search, verified],
+    queryFn: () => adminContactApi.list(page, 20, search, verified),
+  });
+  const exportCsv = useMutation({
+    mutationFn: () => adminContactApi.exportCsv(search, verified),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `divinlove-contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Email list exported");
+    },
+    onError: () => toast.error("Unable to export email list"),
+  });
+
+  return (
+    <section>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2"><Users size={20} className="text-[#E8C547]" /><div><h2 className="font-['Fredoka'] text-lg text-[#2D2A26]">Users</h2><p className="text-xs text-[#6B6560]">Emails collected for verification and report delivery.</p></div></div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6560]" /><input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search email" className="w-full rounded-md border border-[#E8E4DC] py-2 pl-9 pr-3 text-sm sm:w-64" /></div>
+          <select value={verified} onChange={(e) => { setVerified(e.target.value); setPage(1); }} className="rounded-md border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-[#2D2A26]"><option value="all">All users</option><option value="verified">Verified</option><option value="unverified">Unverified</option></select>
+          <button type="button" onClick={() => exportCsv.mutate()} disabled={exportCsv.isPending} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-[#2D2A26] px-4 text-sm font-medium text-white disabled:opacity-50">{exportCsv.isPending ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}Export CSV</button>
+        </div>
+      </div>
+      <div className="hidden overflow-x-auto rounded-lg border border-[#E8E4DC] bg-white md:block">
+        <table className="w-full text-sm">
+          <thead><tr className="border-b border-[#E8E4DC] bg-[#FFFDF5]">{["Email", "Status", "Language", "First recorded", "Last active"].map((heading) => <th key={heading} className="px-4 py-3 text-left font-medium text-[#6B6560]">{heading}</th>)}</tr></thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={5} className="py-12 text-center"><Loader2 className="mx-auto animate-spin text-[#E8C547]" /></td></tr>}
+            {data?.items.map((contact) => <tr key={contact.email} className="border-b border-[#E8E4DC]/60"><td className="px-4 py-3 font-medium text-[#2D2A26]">{contact.email}</td><td className="px-4 py-3"><StatusBadge value={contact.verified_at ? "Verified" : "Unverified"} /></td><td className="px-4 py-3 uppercase text-[#6B6560]">{contact.language || "en"}</td><td className="px-4 py-3 text-xs text-[#6B6560]">{new Date(contact.created_at).toLocaleString()}</td><td className="px-4 py-3 text-xs text-[#6B6560]">{new Date(contact.last_seen_at).toLocaleString()}</td></tr>)}
+            {!isLoading && !data?.items.length && <tr><td colSpan={5} className="py-12 text-center text-[#6B6560]">No users found</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <div className="grid gap-3 md:hidden">
+        {isLoading && <div className="py-12 text-center"><Loader2 className="mx-auto animate-spin text-[#E8C547]" /></div>}
+        {data?.items.map((contact) => <article key={contact.email} className="rounded-lg border border-[#E8E4DC] bg-white p-4"><div className="flex items-start justify-between gap-3"><p className="min-w-0 break-all text-sm font-medium text-[#2D2A26]">{contact.email}</p><StatusBadge value={contact.verified_at ? "Verified" : "Unverified"} /></div><div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#E8E4DC] pt-3 text-xs text-[#6B6560]"><div><p>First recorded</p><p className="mt-1 text-[#2D2A26]">{new Date(contact.created_at).toLocaleDateString()}</p></div><div><p>Last active</p><p className="mt-1 text-[#2D2A26]">{new Date(contact.last_seen_at).toLocaleDateString()}</p></div></div></article>)}
+        {!isLoading && !data?.items.length && <p className="py-12 text-center text-sm text-[#6B6560]">No users found</p>}
+      </div>
+      {data && data.total > data.pageSize && <div className="mt-4 flex justify-center gap-3"><button disabled={page <= 1} onClick={() => setPage(page - 1)} className="rounded-md border px-4 py-2 disabled:opacity-40">Previous</button><span className="px-2 py-2 text-sm">Page {page}</span><button disabled={page * data.pageSize >= data.total} onClick={() => setPage(page + 1)} className="rounded-md border px-4 py-2 disabled:opacity-40">Next</button></div>}
+    </section>
+  );
 }
 
 function SettingsTab() {
@@ -651,7 +706,7 @@ function SettingsTab() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || !settings) {
     return <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin text-[#E8C547]" /></div>;
   }
 
@@ -692,8 +747,50 @@ function SettingsTab() {
           {t("saveSettings", "Save Settings")}
         </button>
       </div>
+      <AnalyticsSettingsPanel settings={settings} />
       <DeliverySettingsPanel />
     </div>
+  );
+}
+
+function AnalyticsSettingsPanel({ settings }: { settings: AdminSettings }) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<UpdateSettingsRequest>({});
+  const save = useMutation({
+    mutationFn: adminSettingsApi.update,
+    onSuccess: () => {
+      setForm({});
+      queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
+      queryClient.invalidateQueries({ queryKey: ["publicSettings"] });
+      toast.success("Analytics settings saved");
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Unable to save analytics settings"),
+  });
+  const la51Enabled = form.la51Enabled ?? settings.la51Enabled;
+  const facebookEnabled = form.facebookPixelEnabled ?? settings.facebookPixelEnabled;
+  const la51SiteId = form.la51SiteId ?? settings.la51SiteId;
+  const la51Ck = form.la51Ck ?? settings.la51Ck;
+  const facebookPixelId = form.facebookPixelId ?? settings.facebookPixelId;
+  const handleSave = () => save.mutate({ la51Enabled, la51SiteId, la51Ck, facebookPixelEnabled: facebookEnabled, facebookPixelId });
+
+  return (
+    <section className="border-t border-[#E8E4DC] bg-white p-5 text-[#2D2A26]">
+      <div className="mb-2 flex items-center gap-2"><Settings size={20} className="text-[#E8C547]" /><h2 className="text-lg font-medium">Analytics</h2></div>
+      <p className="mb-5 text-sm text-[#6B6560]">Configure 51.LA behavior analytics and Facebook Pixel. Blank or disabled integrations do not load on the user site.</p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
+          <label className="flex items-center justify-between gap-4"><span className="font-medium">51.LA</span><input type="checkbox" checked={la51Enabled} onChange={(e) => setForm((current) => ({ ...current, la51Enabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
+          <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Site ID</span><input value={la51SiteId} onChange={(e) => setForm((current) => ({ ...current, la51SiteId: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+          <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">CK</span><input value={la51Ck} onChange={(e) => setForm((current) => ({ ...current, la51Ck: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+        </div>
+        <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
+          <label className="flex items-center justify-between gap-4"><span className="font-medium">Facebook Pixel</span><input type="checkbox" checked={facebookEnabled} onChange={(e) => setForm((current) => ({ ...current, facebookPixelEnabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
+          <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Pixel ID</span><input inputMode="numeric" value={facebookPixelId} onChange={(e) => setForm((current) => ({ ...current, facebookPixelId: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+          <p className="text-xs leading-5 text-[#6B6560]">Tracks page views, verified leads, completed profiles and quizzes, previews, checkout starts and confirmed PayPal purchases.</p>
+        </div>
+      </div>
+      <button type="button" onClick={handleSave} disabled={save.isPending} className="mt-5 inline-flex items-center gap-2 rounded-md bg-[#E8C547] px-5 py-2.5 font-medium disabled:opacity-50">{save.isPending ? <Loader2 size={17} className="animate-spin" /> : <Settings size={17} />}Save analytics</button>
+    </section>
   );
 }
 

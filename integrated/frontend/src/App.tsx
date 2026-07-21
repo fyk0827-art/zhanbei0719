@@ -8,11 +8,13 @@ import NotFound from "./pages/NotFound";
 import GeneratorApp from "./generator/App";
 import ReportAccess from "./pages/ReportAccess";
 import { Toaster } from "@/components/ui/sonner";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 export default function App() {
   return (
     <>
       <Toaster />
+      <AnalyticsTracker />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/report" element={<Report />} />

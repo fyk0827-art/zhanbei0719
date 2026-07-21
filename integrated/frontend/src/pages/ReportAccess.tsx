@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Download, Loader2, Lock } from "lucide-react";
 import { fetchReportByAccessToken, type FetchReportResponse } from "@/generator/services/reportApi";
 import PrismReportPage from "@/generator/components/prismReport/PrismReportPage";
@@ -6,15 +6,23 @@ import ReportGenerationWait from "@/generator/components/ReportGenerationWait";
 import { prismPrecompute } from "@/generator/services/prismPrecompute";
 import { capturePaypalOrder, createPaypalOrder } from "@/generator/services/paymentApi";
 import { settingsApi } from "@/services/api";
+import { trackCheckoutStarted, trackFullReportViewed, trackPreviewReportViewed, trackPurchaseCompleted } from "@/services/analytics";
+
+interface ReportAccessHistoryState {
+  reportAccessToken?: string;
+  reportAccessPaypalOrderId?: string;
+}
 
 function parseReportLink(search: string) {
   const params = new URLSearchParams(search);
   const tokenValues = params.getAll("token");
+  const historyState = (window.history.state || {}) as ReportAccessHistoryState;
+  const incomingAccessToken = params.get("accessToken") || tokenValues[0] || "";
   return {
-    accessToken: params.get("accessToken") || tokenValues[0] || "",
+    accessToken: incomingAccessToken || historyState.reportAccessToken || "",
     paypalOrderId: params.get("paypal") === "return"
       ? (params.get("accessToken") ? (params.get("token") || "") : (tokenValues[1] || ""))
-      : "",
+      : (!incomingAccessToken ? (historyState.reportAccessPaypalOrderId || "") : ""),
   };
 }
 
@@ -27,6 +35,17 @@ export default function ReportAccess() {
   const [payError, setPayError] = useState("");
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [price, setPrice] = useState("29.90");
+
+  useLayoutEffect(() => {
+    if (!token) return;
+    const cleanUrl = new URL(window.location.href);
+    ["accessToken", "token", "PayerID", "paypal"].forEach((key) => cleanUrl.searchParams.delete(key));
+    window.history.replaceState({
+      ...(window.history.state || {}),
+      reportAccessToken: token,
+      reportAccessPaypalOrderId: link.paypalOrderId || undefined,
+    }, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+  }, [link.paypalOrderId, token]);
 
   const loadReport = useCallback(async () => {
     if (!token) return;
@@ -45,6 +64,12 @@ export default function ReportAccess() {
     settingsApi.getPublic().then((settings) => setPrice(Number(settings.reportPrice).toFixed(2))).catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    if (!report?.reportId) return;
+    if (report.unlocked) trackFullReportViewed(report.reportId);
+    else trackPreviewReportViewed(report.reportId, "full");
+  }, [report?.reportId, report?.unlocked]);
+
   const confirmPayment = useCallback(async () => {
     const paypalOrderId = link.paypalOrderId;
     if (!paypalOrderId) return;
@@ -54,6 +79,11 @@ export default function ReportAccess() {
       const result = await capturePaypalOrder(paypalOrderId);
       if (!result.paid) throw new Error("PayPal has not confirmed this payment.");
       setPaymentConfirmed(true);
+      trackPurchaseCompleted(paypalOrderId, result.captureId);
+      window.history.replaceState({
+        ...(window.history.state || {}),
+        reportAccessPaypalOrderId: undefined,
+      }, "", window.location.href);
       await loadReport();
     } catch (reason) {
       setPayError(reason instanceof Error ? reason.message : "Unable to confirm your payment.");
@@ -97,6 +127,7 @@ export default function ReportAccess() {
     try {
       const order = await createPaypalOrder(report.reportId, token);
       if (!order.approvalUrl) throw new Error("PayPal did not provide an approval link.");
+      trackCheckoutStarted(order.paypalOrderId);
       window.location.assign(order.approvalUrl);
     } catch (reason) {
       setPayError(reason instanceof Error ? reason.message : "Unable to start PayPal checkout.");

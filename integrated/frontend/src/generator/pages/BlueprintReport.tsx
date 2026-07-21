@@ -27,6 +27,7 @@ import ReportGenerationWait from "../components/ReportGenerationWait";
 import { MarriageReportView, parseMarriageCoverMeta } from "../components/MarriageReportView";
 import { CareerReportView, parseCareerCoverMeta } from "../components/CareerReportView";
 import { PAYMENT_DISABLED } from "../services/paymentApi";
+import { trackFullReportViewed } from "@/services/analytics";
 import * as echarts from "echarts";
 import { planetLabel, signLabel, resolveReportLocale } from "../services/birthReport500Locale";
 import {
@@ -773,6 +774,10 @@ export default function BlueprintReport({ chart }: Props) {
   }, [reportText]);
 
   const paymentLabels = getPaymentLabels(paymentMode);
+
+  useEffect(() => {
+    if (hasAiReport && reportId) trackFullReportViewed(reportId);
+  }, [hasAiReport, reportId]);
 
   if (returnedFromPaypal && !hasAiReport) {
     return (

@@ -8,12 +8,13 @@ import {
 } from "../services/paymentApi";
 import type { ReportTypeId } from "../types/reportTypes";
 import { settingsApi } from "@/services/api";
+import { trackCheckoutStarted, trackPurchaseCompleted } from "@/services/analytics";
 
 export function useReportUnlock(
   reportId: string | null,
   _options?: { reportType?: ReportTypeId }
 ) {
-  void _options;
+  const reportType = _options?.reportType || "full";
   const [isUnlocked, setIsUnlocked] = useState(PAYMENT_DISABLED);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paidAt, setPaidAt] = useState<number | null>(null);
@@ -74,6 +75,7 @@ export function useReportUnlock(
       setIsUnlocked(true);
       setTradeNo(result.captureId);
       setPaidAt(Date.now());
+      trackPurchaseCompleted(paypalReturnOrderId, result.captureId);
       const clean = new URL(window.location.href);
       clean.searchParams.delete("paypal");
       clean.searchParams.delete("token");
@@ -105,12 +107,13 @@ export function useReportUnlock(
       const result = await createPaypalOrder(reportId);
       if (!result.approvalUrl) throw new Error("PayPal did not provide an approval link.");
       sessionStorage.setItem("life_blueprint_paypal_order_id", result.paypalOrderId);
+      trackCheckoutStarted(result.paypalOrderId, reportType);
       window.location.assign(result.approvalUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to start PayPal checkout.");
       setPaying(false);
     }
-  }, [reportId]);
+  }, [reportId, reportType]);
 
   return {
     isUnlocked,

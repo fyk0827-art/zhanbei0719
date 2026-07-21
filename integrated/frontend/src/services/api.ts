@@ -22,6 +22,7 @@ import type {
   AdminOrder,
   DeliverySettings,
   UpdateDeliverySettings,
+  AdminContact,
 } from "@/types/api";
 
 // 默认走相对路径 /api，由 Vite 代理到本机后端；内网其他电脑访问时勿写死 localhost
@@ -155,6 +156,18 @@ export const adminOrderApi = {
     get<PageDTO<AdminOrder>>("/admin/orders", { page, pageSize, search, status }),
   retryReport: (reportId: string) => post<void>(`/admin/reports/${encodeURIComponent(reportId)}/retry`),
   resendEmail: (reportId: string) => post<void>(`/admin/reports/${encodeURIComponent(reportId)}/resend`),
+};
+
+export const adminContactApi = {
+  list: (page = 1, pageSize = 20, search = "", verified = "all") =>
+    get<PageDTO<AdminContact>>("/admin/contacts", { page, pageSize, search, verified }),
+  exportCsv: async (search = "", verified = "all") => {
+    const response = await apiClient.get<Blob>("/admin/contacts/export", {
+      params: { search, verified },
+      responseType: "blob",
+    });
+    return response.data;
+  },
 };
 
 export const deliverySettingsApi = {

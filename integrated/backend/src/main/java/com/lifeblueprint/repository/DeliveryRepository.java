@@ -88,6 +88,50 @@ public class DeliveryRepository {
         return rows.stream().findFirst();
     }
 
+    public List<Map<String, Object>> adminContacts(String search, String verified, int offset, int limit) {
+        String pattern = "%" + (search == null ? "" : search.trim()) + "%";
+        String verification = normalizeVerificationFilter(verified);
+        return jdbc.queryForList("""
+            SELECT email, language, created_at, last_seen_at, verified_at
+            FROM contacts
+            WHERE email LIKE ?
+              AND (? = 'all' OR (? = 'verified' AND verified_at IS NOT NULL)
+                   OR (? = 'unverified' AND verified_at IS NULL))
+            ORDER BY created_at DESC LIMIT ? OFFSET ?
+            """, pattern, verification, verification, verification, limit, offset);
+    }
+
+    public int adminContactCount(String search, String verified) {
+        String pattern = "%" + (search == null ? "" : search.trim()) + "%";
+        String verification = normalizeVerificationFilter(verified);
+        Integer count = jdbc.queryForObject("""
+            SELECT COUNT(*) FROM contacts
+            WHERE email LIKE ?
+              AND (? = 'all' OR (? = 'verified' AND verified_at IS NOT NULL)
+                   OR (? = 'unverified' AND verified_at IS NULL))
+            """, Integer.class, pattern, verification, verification, verification);
+        return count == null ? 0 : count;
+    }
+
+    public List<Map<String, Object>> adminContactsForExport(String search, String verified) {
+        String pattern = "%" + (search == null ? "" : search.trim()) + "%";
+        String verification = normalizeVerificationFilter(verified);
+        return jdbc.queryForList("""
+            SELECT email, language, created_at, last_seen_at, verified_at
+            FROM contacts
+            WHERE email LIKE ?
+              AND (? = 'all' OR (? = 'verified' AND verified_at IS NOT NULL)
+                   OR (? = 'unverified' AND verified_at IS NULL))
+            ORDER BY created_at DESC
+            """, pattern, verification, verification, verification);
+    }
+
+    private static String normalizeVerificationFilter(String value) {
+        if ("verified".equalsIgnoreCase(value)) return "verified";
+        if ("unverified".equalsIgnoreCase(value)) return "unverified";
+        return "all";
+    }
+
     public void savePreview(String reportId, String preview, String chartJson, String displayName,
                             String contactId, String language, String statusTokenHash) {
         long now = System.currentTimeMillis();

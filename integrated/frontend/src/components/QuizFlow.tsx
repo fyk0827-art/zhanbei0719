@@ -14,6 +14,7 @@ import {
 import { saveQuizReport } from "@/lib/quizReport";
 import PrismBackground from "@/components/prism/PrismBackground";
 import "@/styles/prism.css";
+import { trackQuizCompleted } from "@/services/analytics";
 
 interface AgeGroup {
   id: number;
@@ -140,6 +141,7 @@ export default function QuizFlow({ ageGroups, onClose, initialAge }: QuizFlowPro
     setAnswers(finalAnswers);
     setStep("result");
     setChoosing(false);
+    trackQuizCompleted(sessionStorage.getItem("life_blueprint_flow_id") || "current", reportAnswers.length);
 
     const answerBatch = questions.flatMap((question, index) => {
       const score = finalAnswers[index];
