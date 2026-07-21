@@ -1,14 +1,17 @@
 import type { PublicSettings } from "@/types/api";
 
 type EventProperties = Record<string, string | number | boolean | undefined>;
-type FacebookEvent = "Lead" | "CompleteRegistration" | "ViewContent" | "InitiateCheckout" | "Purchase";
+type FacebookEvent = "PageView" | "Lead" | "CompleteRegistration" | "ViewContent" | "InitiateCheckout" | "Purchase";
 
-interface QueuedEvent {
-  la51Name: string;
-  facebookName?: FacebookEvent | string;
+interface AnalyticsEvent {
+  sourceName: string;
+  facebookName: FacebookEvent | string;
   facebookCustom?: boolean;
   properties: EventProperties;
-  eventId?: string;
+  eventId: string;
+  contactId?: string;
+  reportId?: string;
+  storage?: Storage;
 }
 
 type FbqFunction = ((...args: unknown[]) => void) & {
@@ -29,15 +32,21 @@ declare global {
   }
 }
 
-const pending: QueuedEvent[] = [];
+const pending = new Map<string, AnalyticsEvent>();
+const capiInFlight = new Set<string>();
 let settings: PublicSettings | null = null;
 let initializePromise: Promise<void> | null = null;
-let ready = false;
+let facebookReady = false;
+let la51Ready = false;
 let lastPagePath = "";
 
 function isProductionUserPage() {
   return ["divinlove.com", "www.divinlove.com"].includes(window.location.hostname)
     && !window.location.pathname.startsWith("/admin");
+}
+
+function safePath() {
+  return window.location.pathname.startsWith("/") ? window.location.pathname : "/";
 }
 
 function hasSensitiveQuery() {
@@ -58,6 +67,7 @@ function loadScript(id: string, src: string): Promise<void> {
     const script = existing || document.createElement("script");
     script.id = id;
     script.async = true;
+    script.charset = "UTF-8";
     script.src = src;
     script.addEventListener("load", () => {
       script.dataset.loaded = "true";
@@ -81,23 +91,62 @@ function installFacebookQueue() {
   window._fbq = fbq;
 }
 
+async function diagnostic(provider: "la51" | "facebook" | "capi", status: "READY" | "EVENT_SENT" | "ERROR", event?: string, error?: unknown) {
+  if (import.meta.env.DEV) console.debug(`[analytics] ${provider} ${status}`, event || "", error || "");
+  try {
+    await fetch("/api/analytics/diagnostics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider, status, event, error: error instanceof Error ? error.message : error ? String(error) : undefined }),
+      keepalive: true,
+    });
+  } catch {
+    // Diagnostics must never affect the user flow.
+  }
+}
+
 async function initializeFacebook(config: PublicSettings) {
   if (!config.facebookPixelEnabled || !/^\d{5,32}$/.test(config.facebookPixelId || "")) return;
-  installFacebookQueue();
-  window.fbq?.("init", config.facebookPixelId);
-  await loadScript("facebook-pixel-sdk", "https://connect.facebook.net/en_US/fbevents.js");
+  try {
+    installFacebookQueue();
+    window.fbq?.("init", config.facebookPixelId);
+    await loadScript("facebook-pixel-sdk", "https://connect.facebook.net/en_US/fbevents.js");
+    facebookReady = true;
+    void diagnostic("facebook", "READY");
+    flush();
+  } catch (error) {
+    void diagnostic("facebook", "ERROR", undefined, error);
+  }
+}
+
+async function waitForLaTrack(timeoutMs = 30_000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (typeof window.LA?.track === "function") return;
+    await new Promise((resolve) => window.setTimeout(resolve, 200));
+  }
+  throw new Error("51.LA event SDK did not become ready");
 }
 
 async function initializeLa51(config: PublicSettings) {
   if (!config.la51Enabled || !config.la51SiteId || !config.la51Ck) return;
-  await loadScript("la51-analytics-sdk", "https://sdk.51.la/js-sdk-pro.min.js");
-  window.LA?.init?.({
-    id: config.la51SiteId,
-    ck: config.la51Ck,
-    autoTrack: true,
-    hashMode: true,
-    screenRecord: false,
-  });
+  try {
+    await loadScript("LA_COLLECT", "https://sdk.51.la/js-sdk-pro.min.js");
+    window.LA?.init?.({
+      id: config.la51SiteId,
+      ck: config.la51Ck,
+      autoTrack: true,
+      hashMode: true,
+      screenRecord: false,
+    });
+    await waitForLaTrack();
+    la51Ready = true;
+    void diagnostic("la51", "READY");
+    flush();
+  } catch (error) {
+    void diagnostic("la51", "ERROR", undefined, error);
+    window.setTimeout(() => void initializeLa51(config), 5_000);
+  }
 }
 
 export function initializeAnalytics() {
@@ -111,136 +160,171 @@ export function initializeAnalytics() {
     const payload = await response.json() as { success: boolean; data: PublicSettings };
     settings = payload.data;
     await Promise.allSettled([initializeFacebook(settings), initializeLa51(settings)]);
-    ready = true;
-    pending.splice(0).forEach(dispatch);
+    flush();
   })().catch((error) => {
-    console.warn("Analytics initialization failed", error);
+    if (import.meta.env.DEV) console.warn("Analytics initialization failed", error);
   });
   return initializePromise;
 }
 
-function dispatch(event: QueuedEvent) {
-  if (!settings) return;
+function marker(event: AnalyticsEvent, provider: string) {
+  return `divinlove_analytics_${provider}_${event.eventId}`;
+}
+
+function wasSent(event: AnalyticsEvent, provider: string) {
+  try { return event.storage?.getItem(marker(event, provider)) === "1"; } catch { return false; }
+}
+
+function markSent(event: AnalyticsEvent, provider: string) {
+  try { event.storage?.setItem(marker(event, provider), "1"); } catch { /* Private browsing can deny storage. */ }
+}
+
+function cleanProperties(event: AnalyticsEvent) {
   const properties = { ...event.properties };
-  if (
-    properties.value === undefined
-    && (event.facebookName === "InitiateCheckout" || event.facebookName === "Purchase")
-  ) {
-    properties.value = settings.reportPrice;
+  if (properties.value === undefined && (event.facebookName === "InitiateCheckout" || event.facebookName === "Purchase")) {
+    properties.value = settings?.reportPrice;
   }
-  const cleanProperties = Object.fromEntries(
-    Object.entries(properties).filter(([, value]) => value !== undefined),
-  );
-  if (settings.la51Enabled) {
-    try { window.LA?.track?.(event.la51Name, cleanProperties); } catch (error) { console.warn("51.LA event failed", error); }
-  }
-  if (settings.facebookPixelEnabled && event.facebookName) {
-    try {
-      const method = event.facebookCustom ? "trackCustom" : "track";
-      const options = event.eventId ? { eventID: event.eventId } : undefined;
-      window.fbq?.(method, event.facebookName, cleanProperties, options);
-    } catch (error) {
-      console.warn("Facebook Pixel event failed", error);
-    }
+  return Object.fromEntries(Object.entries(properties).filter(([, value]) => value !== undefined));
+}
+
+function sendLa51(event: AnalyticsEvent, properties: EventProperties) {
+  if (event.sourceName === "PageView" || !settings?.la51Enabled || wasSent(event, "la51")) return true;
+  if (!la51Ready || typeof window.LA?.track !== "function") return false;
+  try {
+    window.LA.track(event.sourceName, properties);
+    markSent(event, "la51");
+    void diagnostic("la51", "EVENT_SENT", event.sourceName);
+    return true;
+  } catch (error) {
+    void diagnostic("la51", "ERROR", event.sourceName, error);
+    return false;
   }
 }
 
-function emit(event: QueuedEvent) {
-  if (ready) dispatch(event);
-  else pending.push(event);
+function sendFacebook(event: AnalyticsEvent, properties: EventProperties) {
+  if (!settings?.facebookPixelEnabled || wasSent(event, "facebook")) return true;
+  if (!facebookReady || !window.fbq) return false;
+  try {
+    window.fbq(event.facebookCustom ? "trackCustom" : "track", event.facebookName, properties, { eventID: event.eventId });
+    markSent(event, "facebook");
+    void diagnostic("facebook", "EVENT_SENT", event.sourceName);
+    return true;
+  } catch (error) {
+    void diagnostic("facebook", "ERROR", event.sourceName, error);
+    return false;
+  }
+}
+
+function sendCapi(event: AnalyticsEvent, properties: EventProperties) {
+  if (["CheckoutStarted", "PurchaseCompleted"].includes(event.sourceName) || wasSent(event, "capi")) return true;
+  if (capiInFlight.has(event.eventId)) return false;
+  capiInFlight.add(event.eventId);
+  void fetch("/api/analytics/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventName: event.sourceName,
+      eventId: event.eventId,
+      occurredAt: Date.now(),
+      path: safePath(),
+      contactId: event.contactId,
+      reportId: event.reportId,
+      ...getAnalyticsContext(),
+      properties,
+    }),
+    keepalive: true,
+  }).then((response) => {
+    if (!response.ok) throw new Error(`CAPI queue returned ${response.status}`);
+    markSent(event, "capi");
+    void diagnostic("capi", "EVENT_SENT", event.sourceName);
+  }).catch((error) => {
+    void diagnostic("capi", "ERROR", event.sourceName, error);
+    window.setTimeout(flush, 2_000);
+  }).finally(() => {
+    capiInFlight.delete(event.eventId);
+    flush();
+  });
+  return false;
+}
+
+function flush() {
+  if (!settings) return;
+  pending.forEach((event, key) => {
+    const properties = cleanProperties(event);
+    const laDone = sendLa51(event, properties);
+    const fbDone = sendFacebook(event, properties);
+    const capiDone = sendCapi(event, properties);
+    if (laDone && fbDone && capiDone) pending.delete(key);
+  });
+}
+
+function emit(event: AnalyticsEvent) {
+  if ([...pending.values()].some((queued) => queued.eventId === event.eventId)) return;
+  pending.set(`${event.sourceName}:${event.eventId}`, event);
+  flush();
   void initializeAnalytics();
 }
 
-function once(storage: Storage, key: string, callback: () => void) {
-  const storageKey = `divinlove_analytics_${key}`;
-  try {
-    if (storage.getItem(storageKey)) return;
-    storage.setItem(storageKey, "1");
-  } catch {
-    // Storage can be unavailable in private browsing; analytics should still proceed.
-  }
-  callback();
+function eventId(prefix: string, id: string) {
+  const safe = id.replace(/[^A-Za-z0-9:_-]/g, "_").slice(0, 96);
+  return `${prefix}:${safe}`;
+}
+
+function cookie(name: string) {
+  const prefix = `${name}=`;
+  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix))?.slice(prefix.length);
+}
+
+export function getAnalyticsContext() {
+  return { fbp: cookie("_fbp"), fbc: cookie("_fbc"), path: safePath() };
 }
 
 export function trackPageView(pathname: string) {
   if (pathname.startsWith("/admin") || pathname === lastPagePath) return;
   lastPagePath = pathname;
-  emit({ la51Name: "PageView", facebookName: "PageView", properties: { path: pathname } });
+  emit({ sourceName: "PageView", facebookName: "PageView", properties: { path: pathname }, eventId: eventId("page", crypto.randomUUID()) });
 }
 
 export function trackEmailVerified(contactId: string) {
-  once(sessionStorage, `email_${contactId}`, () => emit({
-    la51Name: "EmailVerified", facebookName: "Lead", properties: { source: "email_verification" },
-  }));
+  emit({ sourceName: "EmailVerified", facebookName: "Lead", properties: { source: "email_verification" }, eventId: eventId("email", contactId), contactId, storage: sessionStorage });
 }
 
 export function trackPersonalDetailsCompleted(flowId: string) {
-  once(sessionStorage, `details_${flowId}`, () => emit({
-    la51Name: "PersonalDetailsCompleted", facebookName: "CompleteRegistration", properties: { status: "completed" },
-  }));
+  emit({ sourceName: "PersonalDetailsCompleted", facebookName: "CompleteRegistration", properties: { status: "completed" }, eventId: eventId("details", flowId), storage: sessionStorage });
 }
 
 export function trackQuizCompleted(flowId: string, questionCount: number) {
-  once(sessionStorage, `quiz_${flowId}`, () => emit({
-    la51Name: "QuizCompleted", facebookName: "QuizCompleted", facebookCustom: true, properties: { question_count: questionCount },
-  }));
+  emit({ sourceName: "QuizCompleted", facebookName: "QuizCompleted", facebookCustom: true, properties: { question_count: questionCount }, eventId: eventId("quiz", flowId), storage: sessionStorage });
 }
 
 export function trackPreviewReportViewed(reportId: string, reportType: string) {
-  once(sessionStorage, `preview_${reportId}`, () => emit({
-    la51Name: "PreviewReportViewed", facebookName: "ViewContent", properties: { content_type: "preview_report", report_type: reportType },
-  }));
+  emit({ sourceName: "PreviewReportViewed", facebookName: "ViewContent", properties: { content_type: "preview_report", report_type: reportType }, eventId: eventId("preview", reportId), reportId, storage: sessionStorage });
 }
 
 export function trackCheckoutStarted(paypalOrderId: string, reportType = "full") {
-  once(sessionStorage, `checkout_${paypalOrderId}`, () => emit({
-    la51Name: "CheckoutStarted", facebookName: "InitiateCheckout", properties: {
-      value: settings?.reportPrice,
-      currency: "USD",
-      report_type: reportType,
-    },
-  }));
+  emit({ sourceName: "CheckoutStarted", facebookName: "InitiateCheckout", properties: { value: settings?.reportPrice, currency: "USD", report_type: reportType }, eventId: paypalOrderId, storage: sessionStorage });
 }
 
 export function trackPurchaseCompleted(paypalOrderId: string, captureId?: string) {
-  once(localStorage, `purchase_${captureId || paypalOrderId}`, () => emit({
-    la51Name: "PurchaseCompleted", facebookName: "Purchase", eventId: captureId || paypalOrderId, properties: {
-      value: settings?.reportPrice,
-      currency: "USD",
-    },
-  }));
+  emit({ sourceName: "PurchaseCompleted", facebookName: "Purchase", properties: { value: settings?.reportPrice, currency: "USD" }, eventId: captureId || paypalOrderId, storage: localStorage });
 }
 
 export function trackFullReportViewed(reportId: string) {
-  once(localStorage, `full_report_${reportId}`, () => emit({
-    la51Name: "FullReportViewed", facebookName: "FullReportViewed", facebookCustom: true, properties: { content_type: "full_report" },
-  }));
+  emit({ sourceName: "FullReportViewed", facebookName: "FullReportViewed", facebookCustom: true, properties: { content_type: "full_report" }, eventId: eventId("full", reportId), reportId, storage: localStorage });
 }
 
 export function trackShareLinkCreated(shareId: string) {
-  once(sessionStorage, `share_created_${shareId}`, () => emit({
-    la51Name: "ShareLinkCreated", facebookName: "ShareLinkCreated", facebookCustom: true,
-    properties: { share_id: shareId, report_type: "full" },
-  }));
+  emit({ sourceName: "ShareLinkCreated", facebookName: "ShareLinkCreated", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("share_created", shareId), storage: sessionStorage });
 }
 
 export function trackReportShared(shareId: string, method: "system" | "clipboard") {
-  emit({
-    la51Name: "ReportShared", facebookName: "ReportShared", facebookCustom: true,
-    properties: { share_id: shareId, report_type: "full", method },
-  });
+  emit({ sourceName: "ReportShared", facebookName: "ReportShared", facebookCustom: true, properties: { report_type: "full", method }, eventId: eventId("shared", `${shareId}:${crypto.randomUUID()}`) });
 }
 
 export function trackSharedReportViewed(shareId: string) {
-  once(sessionStorage, `shared_view_${shareId}`, () => emit({
-    la51Name: "SharedReportViewed", facebookName: "SharedReportViewed", facebookCustom: true,
-    properties: { share_id: shareId, report_type: "full" },
-  }));
+  emit({ sourceName: "SharedReportViewed", facebookName: "SharedReportViewed", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("shared_view", shareId), storage: sessionStorage });
 }
 
 export function trackSharedReportCtaClicked(shareId: string) {
-  emit({
-    la51Name: "SharedReportCtaClicked", facebookName: "SharedReportCtaClicked", facebookCustom: true,
-    properties: { share_id: shareId, report_type: "full" },
-  });
+  emit({ sourceName: "SharedReportCtaClicked", facebookName: "SharedReportCtaClicked", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("shared_cta", `${shareId}:${crypto.randomUUID()}`) });
 }

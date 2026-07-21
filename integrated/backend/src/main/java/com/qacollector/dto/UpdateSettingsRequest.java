@@ -11,4 +11,8 @@ public class UpdateSettingsRequest {
     private String la51Ck;
     private Boolean facebookPixelEnabled;
     private String facebookPixelId;
+    private Boolean facebookCapiEnabled;
+    private String facebookCapiAccessToken;
+    private String facebookCapiTestEventCode;
+    private String facebookCapiApiVersion;
 }

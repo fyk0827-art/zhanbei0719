@@ -147,6 +147,11 @@ export interface AdminSettings {
   la51Ck: string;
   facebookPixelEnabled: boolean;
   facebookPixelId: string;
+  facebookCapiEnabled: boolean;
+  facebookCapiAccessToken: string;
+  facebookCapiAccessTokenConfigured: boolean;
+  facebookCapiTestEventCode: string;
+  facebookCapiApiVersion: string;
 }
 
 export interface UpdateSettingsRequest {
@@ -157,6 +162,33 @@ export interface UpdateSettingsRequest {
   la51Ck?: string;
   facebookPixelEnabled?: boolean;
   facebookPixelId?: string;
+  facebookCapiEnabled?: boolean;
+  facebookCapiAccessToken?: string;
+  facebookCapiTestEventCode?: string;
+  facebookCapiApiVersion?: string;
+}
+
+export interface AnalyticsDiagnostics {
+  capiEnabled: boolean;
+  pending: number;
+  sending: number;
+  failed: number;
+  sent: number;
+  latest?: {
+    event_name?: string;
+    status?: string;
+    attempts?: number;
+    sent_at?: number;
+    last_error?: string;
+  } | null;
+  providers: Array<{
+    provider: string;
+    status: string;
+    last_event?: string;
+    last_ready_at?: number;
+    last_event_at?: number;
+    last_error?: string;
+  }>;
 }
 
 export interface AdminContact {

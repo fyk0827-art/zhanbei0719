@@ -17,6 +17,7 @@ public final class GeneratorSchemaSupport {
         ensureOrders(jdbc);
         ensureUnlocks(jdbc);
         ensureDeliveryTables(jdbc);
+        ensureAnalyticsTables(jdbc);
         log.info("Generator schema (reports/orders/unlocks/delivery) is ready");
     }
 
@@ -87,6 +88,52 @@ public final class GeneratorSchemaSupport {
         ensureColumn(jdbc, "orders", "paypal_order_id", "ALTER TABLE orders ADD COLUMN paypal_order_id VARCHAR(64) NULL AFTER payment_environment");
         ensureColumn(jdbc, "orders", "paypal_capture_id", "ALTER TABLE orders ADD COLUMN paypal_capture_id VARCHAR(64) NULL AFTER paypal_order_id");
         ensureColumn(jdbc, "orders", "refund_status", "ALTER TABLE orders ADD COLUMN refund_status VARCHAR(24) NOT NULL DEFAULT 'none' AFTER paypal_capture_id");
+        ensureColumn(jdbc, "orders", "analytics_client_ip", "ALTER TABLE orders ADD COLUMN analytics_client_ip VARCHAR(64) NULL AFTER refund_status");
+        ensureColumn(jdbc, "orders", "analytics_user_agent", "ALTER TABLE orders ADD COLUMN analytics_user_agent VARCHAR(512) NULL AFTER analytics_client_ip");
+        ensureColumn(jdbc, "orders", "analytics_fbp", "ALTER TABLE orders ADD COLUMN analytics_fbp VARCHAR(255) NULL AFTER analytics_user_agent");
+        ensureColumn(jdbc, "orders", "analytics_fbc", "ALTER TABLE orders ADD COLUMN analytics_fbc VARCHAR(255) NULL AFTER analytics_fbp");
+        ensureColumn(jdbc, "orders", "analytics_source_path", "ALTER TABLE orders ADD COLUMN analytics_source_path VARCHAR(512) NULL AFTER analytics_fbc");
+    }
+
+    private static void ensureAnalyticsTables(JdbcTemplate jdbc) {
+        jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS facebook_conversion_events (
+              id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+              source_event VARCHAR(64) NOT NULL,
+              event_name VARCHAR(64) NOT NULL,
+              event_id VARCHAR(128) NOT NULL,
+              event_time BIGINT NOT NULL,
+              event_source_url VARCHAR(512) NOT NULL,
+              contact_id VARCHAR(36) NULL,
+              report_id VARCHAR(32) NULL,
+              client_ip VARCHAR(64) NULL,
+              client_user_agent VARCHAR(512) NULL,
+              fbp VARCHAR(255) NULL,
+              fbc VARCHAR(255) NULL,
+              custom_data JSON NULL,
+              status VARCHAR(24) NOT NULL DEFAULT 'PENDING',
+              attempts INT NOT NULL DEFAULT 0,
+              next_attempt_at BIGINT NOT NULL,
+              response_id VARCHAR(128) NULL,
+              last_error TEXT NULL,
+              created_at BIGINT NOT NULL,
+              updated_at BIGINT NOT NULL,
+              sent_at BIGINT NULL,
+              UNIQUE KEY uk_facebook_event (event_name, event_id),
+              INDEX idx_facebook_queue (status, next_attempt_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """);
+        jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS analytics_provider_diagnostics (
+              provider VARCHAR(32) NOT NULL PRIMARY KEY,
+              status VARCHAR(24) NOT NULL,
+              last_event VARCHAR(64) NULL,
+              last_ready_at BIGINT NULL,
+              last_event_at BIGINT NULL,
+              last_error VARCHAR(512) NULL,
+              updated_at BIGINT NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """);
     }
 
     private static void ensureUnlocks(JdbcTemplate jdbc) {

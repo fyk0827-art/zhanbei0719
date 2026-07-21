@@ -375,9 +375,14 @@ public class DeliveryRepository {
         return count == null ? 0 : count;
     }
 
-    public void attachPaypalOrder(String internalId, String paypalOrderId, String environment) {
-        jdbc.update("UPDATE orders SET channel='paypal', paypal_order_id=?, payment_environment=?, currency='USD' WHERE id=?",
-            paypalOrderId, environment, internalId);
+    public void attachPaypalOrder(String internalId, String paypalOrderId, String environment,
+                                  String clientIp, String userAgent, String fbp, String fbc, String sourcePath) {
+        jdbc.update("""
+            UPDATE orders SET channel='paypal', paypal_order_id=?, payment_environment=?, currency='USD',
+              analytics_client_ip=?, analytics_user_agent=?, analytics_fbp=?, analytics_fbc=?, analytics_source_path=?
+            WHERE id=?
+            """, paypalOrderId, environment, truncate(clientIp, 64), truncate(userAgent, 512), truncate(fbp, 255),
+            truncate(fbc, 255), truncate(sourcePath, 512), internalId);
     }
 
     public void markPaypalRefunded(String paypalOrderId) {
@@ -386,7 +391,11 @@ public class DeliveryRepository {
 
     public Optional<Map<String, Object>> paypalOrder(String paypalOrderId) {
         List<Map<String, Object>> rows = jdbc.queryForList(
-            "SELECT id, report_id, status, paypal_capture_id FROM orders WHERE paypal_order_id=? LIMIT 1", paypalOrderId);
+            """
+            SELECT id,report_id,status,paypal_capture_id,amount,currency,paid_at,
+                   analytics_client_ip,analytics_user_agent,analytics_fbp,analytics_fbc,analytics_source_path
+            FROM orders WHERE paypal_order_id=? LIMIT 1
+            """, paypalOrderId);
         return rows.stream().findFirst();
     }
 

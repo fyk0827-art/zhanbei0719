@@ -23,6 +23,7 @@ import type {
   DeliverySettings,
   UpdateDeliverySettings,
   AdminContact,
+  AnalyticsDiagnostics,
 } from "@/types/api";
 
 // 默认走相对路径 /api，由 Vite 代理到本机后端；内网其他电脑访问时勿写死 localhost
@@ -112,6 +113,9 @@ export const contactApi = {
 export const adminSettingsApi = {
   get: () => get<AdminSettings>("/admin/settings"),
   update: (req: UpdateSettingsRequest) => put<AdminSettings>("/admin/settings", req),
+  analyticsDiagnostics: () => get<AnalyticsDiagnostics>("/admin/analytics/diagnostics"),
+  sendAnalyticsTest: () => post<{ queued: boolean }>("/admin/analytics/test"),
+  retryAnalytics: () => post<{ retried: number }>("/admin/analytics/retry"),
 };
 
 // ======== Question API ========

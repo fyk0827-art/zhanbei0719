@@ -1,3 +1,5 @@
+import { getAnalyticsContext } from "@/services/analytics";
+
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
 
 /** 报告页付费墙：未支付仅预览前半，支付后解锁全文；本地联调可设 VITE_PAYMENT_DISABLED=true */
@@ -46,7 +48,8 @@ export interface PaypalOrderResponse {
 
 export async function createPaypalOrder(reportId: string, returnToken?: string): Promise<PaypalOrderResponse> {
   const res = await fetch(`${API_BASE}/api/paypal/orders`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reportId, returnToken }),
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reportId, returnToken, ...getAnalyticsContext() }),
   });
   return parseJson(res);
 }

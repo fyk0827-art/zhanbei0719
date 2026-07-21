@@ -20,7 +20,7 @@ public class PaypalController {
     }
 
     @PostMapping("/orders")
-    public Map<String, Object> create(@RequestBody Map<String, String> body) throws Exception {
+    public Map<String, Object> create(@RequestBody Map<String, String> body, HttpServletRequest request) throws Exception {
         String reportId = body.get("reportId");
         if (reportId == null || reportId.isBlank()) throw new IllegalArgumentException("reportId is required");
         String returnToken = body.get("returnToken");
@@ -28,7 +28,8 @@ public class PaypalController {
                 && !reportDelivery.accessTokenMatchesReport(returnToken, reportId.trim())) {
             throw new IllegalArgumentException("The report return link is invalid");
         }
-        return paypal.createOrder(reportId.trim(), returnToken);
+        return paypal.createOrder(reportId.trim(), returnToken, AnalyticsController.clientIp(request),
+            request.getHeader("User-Agent"), body.get("fbp"), body.get("fbc"), body.get("path"));
     }
 
     @PostMapping("/orders/{paypalOrderId}/capture")

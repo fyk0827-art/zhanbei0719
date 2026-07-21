@@ -12,4 +12,9 @@ public class AdminSettingsDTO {
     private String la51Ck;
     private boolean facebookPixelEnabled;
     private String facebookPixelId;
+    private boolean facebookCapiEnabled;
+    private String facebookCapiAccessToken;
+    private boolean facebookCapiAccessTokenConfigured;
+    private String facebookCapiTestEventCode;
+    private String facebookCapiApiVersion;
 }

@@ -6,6 +6,7 @@ import com.qacollector.dto.UpdateSettingsRequest;
 import com.qacollector.entity.AppSetting;
 import com.qacollector.repository.AppSettingRepository;
 import com.lifeblueprint.service.PricingService;
+import com.lifeblueprint.service.SecretCryptoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +24,14 @@ public class SettingsService {
     public static final String KEY_51LA_CK = "analytics_51la_ck";
     public static final String KEY_FACEBOOK_PIXEL_ENABLED = "analytics_facebook_pixel_enabled";
     public static final String KEY_FACEBOOK_PIXEL_ID = "analytics_facebook_pixel_id";
+    public static final String KEY_FACEBOOK_CAPI_ENABLED = "analytics_facebook_capi_enabled";
+    public static final String KEY_FACEBOOK_CAPI_ACCESS_TOKEN = "analytics_facebook_capi_access_token";
+    public static final String KEY_FACEBOOK_CAPI_TEST_CODE = "analytics_facebook_capi_test_code";
+    public static final String KEY_FACEBOOK_CAPI_API_VERSION = "analytics_facebook_capi_api_version";
 
     private final AppSettingRepository repository;
     private final PricingService pricingService;
+    private final SecretCryptoService crypto;
 
     public int getQuizQuestionCount() {
         return parseInt(getValue(KEY_QUIZ_QUESTION_COUNT, "20"), 20, 1, 50);
@@ -41,6 +47,14 @@ public class SettingsService {
     public String getLa51Ck() { return getValue(KEY_51LA_CK, "").trim(); }
     public boolean isFacebookPixelEnabled() { return Boolean.parseBoolean(getValue(KEY_FACEBOOK_PIXEL_ENABLED, "false")); }
     public String getFacebookPixelId() { return getValue(KEY_FACEBOOK_PIXEL_ID, "").trim(); }
+    public boolean isFacebookCapiEnabled() { return Boolean.parseBoolean(getValue(KEY_FACEBOOK_CAPI_ENABLED, "false")); }
+    public String getFacebookCapiAccessToken() {
+        String stored = getValue(KEY_FACEBOOK_CAPI_ACCESS_TOKEN, "").trim();
+        if (stored.isBlank()) return "";
+        return crypto.decrypt(stored);
+    }
+    public String getFacebookCapiTestCode() { return getValue(KEY_FACEBOOK_CAPI_TEST_CODE, "").trim(); }
+    public String getFacebookCapiApiVersion() { return getValue(KEY_FACEBOOK_CAPI_API_VERSION, "v25.0").trim(); }
 
     public PublicSettingsDTO getPublicSettings() {
         PublicSettingsDTO dto = new PublicSettingsDTO();
@@ -63,6 +77,11 @@ public class SettingsService {
         dto.setLa51Ck(getLa51Ck());
         dto.setFacebookPixelEnabled(isFacebookPixelEnabled());
         dto.setFacebookPixelId(getFacebookPixelId());
+        dto.setFacebookCapiEnabled(isFacebookCapiEnabled());
+        dto.setFacebookCapiAccessToken(getFacebookCapiAccessToken());
+        dto.setFacebookCapiAccessTokenConfigured(!getFacebookCapiAccessToken().isBlank());
+        dto.setFacebookCapiTestEventCode(getFacebookCapiTestCode());
+        dto.setFacebookCapiApiVersion(getFacebookCapiApiVersion());
         return dto;
     }
 
@@ -95,6 +114,23 @@ public class SettingsService {
             }
             upsert(KEY_FACEBOOK_PIXEL_ID, value, true, "Facebook Pixel ID");
         }
+        if (req.getFacebookCapiAccessToken() != null) {
+            String token = req.getFacebookCapiAccessToken().trim();
+            upsert(KEY_FACEBOOK_CAPI_ACCESS_TOKEN, token.isBlank() ? "" : crypto.encrypt(token), false,
+                "Encrypted Meta Conversions API access token");
+        }
+        if (req.getFacebookCapiTestEventCode() != null) {
+            String value = req.getFacebookCapiTestEventCode().trim();
+            if (!value.isEmpty() && !value.matches("[A-Za-z0-9_-]{4,128}")) {
+                throw new IllegalArgumentException("Meta test event code contains unsupported characters");
+            }
+            upsert(KEY_FACEBOOK_CAPI_TEST_CODE, value, false, "Meta Conversions API test event code");
+        }
+        if (req.getFacebookCapiApiVersion() != null) {
+            String value = req.getFacebookCapiApiVersion().trim();
+            if (!value.matches("v[0-9]{1,2}\\.0")) throw new IllegalArgumentException("Meta API version must look like v25.0");
+            upsert(KEY_FACEBOOK_CAPI_API_VERSION, value, false, "Meta Graph API version");
+        }
         if (req.getLa51Enabled() != null) {
             if (req.getLa51Enabled() && (getLa51SiteId().isBlank() || getLa51Ck().isBlank())) {
                 throw new IllegalArgumentException("51.LA Site ID and CK are required before enabling analytics");
@@ -106,6 +142,13 @@ public class SettingsService {
                 throw new IllegalArgumentException("Facebook Pixel ID is required before enabling the pixel");
             }
             upsert(KEY_FACEBOOK_PIXEL_ENABLED, String.valueOf(req.getFacebookPixelEnabled()), true, "Enable Facebook Pixel");
+        }
+        if (req.getFacebookCapiEnabled() != null) {
+            if (req.getFacebookCapiEnabled() && (getFacebookPixelId().isBlank() || getFacebookCapiAccessToken().isBlank())) {
+                throw new IllegalArgumentException("Pixel ID and Conversions API access token are required before enabling CAPI");
+            }
+            upsert(KEY_FACEBOOK_CAPI_ENABLED, String.valueOf(req.getFacebookCapiEnabled()), false,
+                "Enable Meta Conversions API");
         }
         return getAdminSettings();
     }
@@ -123,6 +166,9 @@ public class SettingsService {
         seedIfMissing(KEY_51LA_CK, "", "51.LA analytics CK");
         seedIfMissing(KEY_FACEBOOK_PIXEL_ENABLED, "false", "Enable Facebook Pixel");
         seedIfMissing(KEY_FACEBOOK_PIXEL_ID, "", "Facebook Pixel ID");
+        seedIfMissing(KEY_FACEBOOK_CAPI_ENABLED, "false", false, "Enable Meta Conversions API");
+        seedIfMissing(KEY_FACEBOOK_CAPI_TEST_CODE, "", false, "Meta Conversions API test event code");
+        seedIfMissing(KEY_FACEBOOK_CAPI_API_VERSION, "v25.0", false, "Meta Graph API version");
     }
 
     /** Used by feeling-scale seeder to lock quiz length to 20. */
@@ -151,6 +197,10 @@ public class SettingsService {
 
     private void seedIfMissing(String key, String value, String description) {
         if (!repository.existsById(key)) upsert(key, value, true, description);
+    }
+
+    private void seedIfMissing(String key, String value, boolean publicVisible, String description) {
+        if (!repository.existsById(key)) upsert(key, value, publicVisible, description);
     }
 
     private static void validateIdentifier(String value, String label) {

@@ -27,20 +27,24 @@ public class PaypalService {
     private final PaymentRepository payments;
     private final PaymentProperties paymentProperties;
     private final PricingService pricingService;
+    private final FacebookConversionsService conversions;
     private final ObjectMapper json;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
 
     public PaypalService(DeliveryConfigService config, DeliveryRepository delivery, PaymentRepository payments,
-                         PaymentProperties paymentProperties, PricingService pricingService, ObjectMapper json) {
+                         PaymentProperties paymentProperties, PricingService pricingService, ObjectMapper json,
+                         FacebookConversionsService conversions) {
         this.config = config;
         this.delivery = delivery;
         this.payments = payments;
         this.paymentProperties = paymentProperties;
         this.pricingService = pricingService;
         this.json = json;
+        this.conversions = conversions;
     }
 
-    public Map<String, Object> createOrder(String reportId, String returnToken) throws Exception {
+    public Map<String, Object> createOrder(String reportId, String returnToken, String clientIp, String userAgent,
+                                           String fbp, String fbc, String sourcePath) throws Exception {
         Map<String, Object> report = delivery.report(reportId).orElseThrow(() -> new IllegalArgumentException("Report input not found"));
         String email = report.get("email") == null ? null : String.valueOf(report.get("email"));
         if (email == null || email.isBlank()) throw new IllegalArgumentException("A report delivery email is required");
@@ -78,7 +82,10 @@ public class PaypalService {
         JsonNode response = paypalRequest("POST", "/v2/checkout/orders", json.writeValueAsString(payload));
         String paypalOrderId = response.path("id").asText();
         if (paypalOrderId.isBlank()) throw new IllegalStateException("PayPal did not return an order id");
-        delivery.attachPaypalOrder(internalId, paypalOrderId, config.paypalEnvironment());
+        delivery.attachPaypalOrder(internalId, paypalOrderId, config.paypalEnvironment(), clientIp, userAgent, fbp, fbc, sourcePath);
+        conversions.enqueueServer("CheckoutStarted", paypalOrderId, System.currentTimeMillis(), sourcePath,
+            reportId, clientIp, userAgent, fbp, fbc,
+            Map.of("value", amount / 100.0, "currency", "USD", "report_type", "full"));
         String approvalUrl = "";
         for (JsonNode link : response.path("links")) {
             if ("payer-action".equals(link.path("rel").asText()) || "approve".equals(link.path("rel").asText())) {
@@ -100,6 +107,7 @@ public class PaypalService {
     public Map<String, Object> capture(String paypalOrderId) throws Exception {
         Map<String, Object> existing = delivery.paypalOrder(paypalOrderId).orElseThrow(() -> new IllegalArgumentException("PayPal order not found"));
         if ("paid".equals(String.valueOf(existing.get("status")))) {
+            queuePurchase(existing, String.valueOf(existing.get("paypal_capture_id")));
             return captureResult(paypalOrderId, String.valueOf(existing.get("paypal_capture_id")),
                 String.valueOf(existing.get("report_id")), true);
         }
@@ -121,6 +129,8 @@ public class PaypalService {
         String reportId = null;
         if ("COMPLETED".equals(status)) {
             reportId = delivery.markPaypalPaid(paypalOrderId, captureId, payerEmail).orElse(null);
+            Map<String, Object> paid = delivery.paypalOrder(paypalOrderId).orElse(existing);
+            queuePurchase(paid, captureId);
         }
         return captureResult(paypalOrderId, captureId, reportId, "COMPLETED".equals(status));
     }
@@ -156,10 +166,27 @@ public class PaypalService {
         JsonNode resource = event.path("resource");
         String paypalOrderId = resource.path("supplementary_data").path("related_ids").path("order_id").asText();
         if ("PAYMENT.CAPTURE.COMPLETED".equals(eventType)) {
-            delivery.markPaypalPaid(paypalOrderId, resource.path("id").asText(), null);
+            String captureId = resource.path("id").asText();
+            delivery.markPaypalPaid(paypalOrderId, captureId, null);
+            delivery.paypalOrder(paypalOrderId).ifPresent(row -> queuePurchase(row, captureId));
         } else if (eventType.startsWith("PAYMENT.CAPTURE.REFUNDED")) {
             delivery.markPaypalRefunded(paypalOrderId);
         }
+    }
+
+    private void queuePurchase(Map<String, Object> order, String captureId) {
+        if (captureId == null || captureId.isBlank() || "null".equals(captureId)) return;
+        int amount = ((Number) order.getOrDefault("amount", 0)).intValue();
+        long paidAt = order.get("paid_at") instanceof Number value ? value.longValue() : System.currentTimeMillis();
+        conversions.enqueueServer("PurchaseCompleted", captureId, paidAt,
+            string(order.get("analytics_source_path")), string(order.get("report_id")),
+            string(order.get("analytics_client_ip")), string(order.get("analytics_user_agent")),
+            string(order.get("analytics_fbp")), string(order.get("analytics_fbc")),
+            Map.of("value", amount / 100.0, "currency", String.valueOf(order.getOrDefault("currency", "USD"))));
+    }
+
+    private static String string(Object value) {
+        return value == null ? null : String.valueOf(value);
     }
 
     private JsonNode paypalRequest(String method, String path, String body) throws Exception {

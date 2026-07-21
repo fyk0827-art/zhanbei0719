@@ -756,6 +756,11 @@ function SettingsTab() {
 function AnalyticsSettingsPanel({ settings }: { settings: AdminSettings }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<UpdateSettingsRequest>({});
+  const diagnostics = useQuery({
+    queryKey: ["admin", "analytics", "diagnostics"],
+    queryFn: adminSettingsApi.analyticsDiagnostics,
+    refetchInterval: 10_000,
+  });
   const save = useMutation({
     mutationFn: adminSettingsApi.update,
     onSuccess: () => {
@@ -771,22 +776,67 @@ function AnalyticsSettingsPanel({ settings }: { settings: AdminSettings }) {
   const la51SiteId = form.la51SiteId ?? settings.la51SiteId;
   const la51Ck = form.la51Ck ?? settings.la51Ck;
   const facebookPixelId = form.facebookPixelId ?? settings.facebookPixelId;
-  const handleSave = () => save.mutate({ la51Enabled, la51SiteId, la51Ck, facebookPixelEnabled: facebookEnabled, facebookPixelId });
+  const capiEnabled = form.facebookCapiEnabled ?? settings.facebookCapiEnabled;
+  const capiToken = form.facebookCapiAccessToken ?? settings.facebookCapiAccessToken;
+  const capiTestCode = form.facebookCapiTestEventCode ?? settings.facebookCapiTestEventCode;
+  const capiApiVersion = form.facebookCapiApiVersion ?? settings.facebookCapiApiVersion;
+  const testEvent = useMutation({
+    mutationFn: adminSettingsApi.sendAnalyticsTest,
+    onSuccess: () => { toast.success("CAPI test event queued"); diagnostics.refetch(); },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Unable to queue test event"),
+  });
+  const retryEvents = useMutation({
+    mutationFn: adminSettingsApi.retryAnalytics,
+    onSuccess: (result) => { toast.success(`${result.retried} failed event(s) queued again`); diagnostics.refetch(); },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Unable to retry events"),
+  });
+  const handleSave = () => save.mutate({
+    la51Enabled,
+    la51SiteId,
+    la51Ck,
+    facebookPixelEnabled: facebookEnabled,
+    facebookPixelId,
+    facebookCapiEnabled: capiEnabled,
+    facebookCapiAccessToken: capiToken,
+    facebookCapiTestEventCode: capiTestCode,
+    facebookCapiApiVersion: capiApiVersion,
+  });
+  const providers = Object.fromEntries((diagnostics.data?.providers || []).map((provider) => [provider.provider, provider]));
 
   return (
     <section className="border-t border-[#E8E4DC] bg-white p-5 text-[#2D2A26]">
       <div className="mb-2 flex items-center gap-2"><Settings size={20} className="text-[#E8C547]" /><h2 className="text-lg font-medium">Analytics</h2></div>
-      <p className="mb-5 text-sm text-[#6B6560]">Configure 51.LA behavior analytics and Facebook Pixel. Blank or disabled integrations do not load on the user site.</p>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <p className="mb-5 text-sm text-[#6B6560]">Configure 51.LA, Facebook Pixel and server-side Conversions API. Disabled integrations do not affect payment or report delivery.</p>
+      <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
           <label className="flex items-center justify-between gap-4"><span className="font-medium">51.LA</span><input type="checkbox" checked={la51Enabled} onChange={(e) => setForm((current) => ({ ...current, la51Enabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
           <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Site ID</span><input value={la51SiteId} onChange={(e) => setForm((current) => ({ ...current, la51SiteId: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
           <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">CK</span><input value={la51Ck} onChange={(e) => setForm((current) => ({ ...current, la51Ck: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+          <p className="text-xs text-[#6B6560]">SDK: {providers.la51?.status || "No browser signal yet"}{providers.la51?.last_event ? ` · ${providers.la51.last_event}` : ""}</p>
         </div>
         <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
           <label className="flex items-center justify-between gap-4"><span className="font-medium">Facebook Pixel</span><input type="checkbox" checked={facebookEnabled} onChange={(e) => setForm((current) => ({ ...current, facebookPixelEnabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
           <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Pixel ID</span><input inputMode="numeric" value={facebookPixelId} onChange={(e) => setForm((current) => ({ ...current, facebookPixelId: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
           <p className="text-xs leading-5 text-[#6B6560]">Tracks page views, verified leads, completed profiles and quizzes, previews, checkout starts and confirmed PayPal purchases.</p>
+          <p className="text-xs text-[#6B6560]">SDK: {providers.facebook?.status || "No browser signal yet"}{providers.facebook?.last_event ? ` · ${providers.facebook.last_event}` : ""}</p>
+        </div>
+        <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
+          <label className="flex items-center justify-between gap-4"><span className="font-medium">Facebook Conversions API</span><input type="checkbox" checked={capiEnabled} onChange={(e) => setForm((current) => ({ ...current, facebookCapiEnabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
+          <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Access Token</span><input value={capiToken} onChange={(e) => setForm((current) => ({ ...current, facebookCapiAccessToken: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Test Event Code</span><input value={capiTestCode} onChange={(e) => setForm((current) => ({ ...current, facebookCapiTestEventCode: e.target.value }))} placeholder="TEST..." className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+            <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Graph API</span><input value={capiApiVersion} onChange={(e) => setForm((current) => ({ ...current, facebookCapiApiVersion: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="border border-[#E8E4DC] p-2"><strong className="block text-base">{diagnostics.data?.pending ?? "–"}</strong>Pending</div>
+            <div className="border border-[#E8E4DC] p-2"><strong className="block text-base">{diagnostics.data?.sent ?? "–"}</strong>Sent</div>
+            <div className="border border-[#E8E4DC] p-2"><strong className="block text-base text-red-600">{diagnostics.data?.failed ?? "–"}</strong>Failed</div>
+          </div>
+          {diagnostics.data?.latest?.last_error && <p className="break-words text-xs text-red-600">{diagnostics.data.latest.last_error}</p>}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => testEvent.mutate()} disabled={testEvent.isPending || !settings.facebookCapiEnabled} className="rounded-md border border-[#D9D3C8] px-3 py-2 text-xs font-medium disabled:opacity-40">Send test event</button>
+            <button type="button" onClick={() => retryEvents.mutate()} disabled={retryEvents.isPending || !diagnostics.data?.failed} className="rounded-md border border-[#D9D3C8] px-3 py-2 text-xs font-medium disabled:opacity-40">Retry failed events</button>
+          </div>
         </div>
       </div>
       <button type="button" onClick={handleSave} disabled={save.isPending} className="mt-5 inline-flex items-center gap-2 rounded-md bg-[#E8C547] px-5 py-2.5 font-medium disabled:opacity-50">{save.isPending ? <Loader2 size={17} className="animate-spin" /> : <Settings size={17} />}Save analytics</button>
