@@ -43,15 +43,15 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
   const [customTz, setCustomTz] = useState("8");
   const [useCustomCoords, setUseCustomCoords] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
-  const [email, setEmail] = useState(() => localStorage.getItem("life_blueprint_email") || "");
+  const [email, setEmail] = useState(() => sessionStorage.getItem("life_blueprint_email") || "");
   const [verificationCode, setVerificationCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(() => {
-    const savedEmail = localStorage.getItem("life_blueprint_email") || "";
-    return Boolean(savedEmail && localStorage.getItem("life_blueprint_email_verified") === savedEmail.toLowerCase()
-      && localStorage.getItem("life_blueprint_contact_id"));
+    const savedEmail = sessionStorage.getItem("life_blueprint_email") || "";
+    return Boolean(savedEmail && sessionStorage.getItem("life_blueprint_email_verified") === savedEmail.toLowerCase()
+      && sessionStorage.getItem("life_blueprint_contact_id"));
   });
-  const [verifiedEmail, setVerifiedEmail] = useState(() => localStorage.getItem("life_blueprint_email_verified") || "");
+  const [verifiedEmail, setVerifiedEmail] = useState(() => sessionStorage.getItem("life_blueprint_email_verified") || "");
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -126,9 +126,9 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
     setEmailError("");
     try {
       const contact = await contactApi.verifyCode(normalized, verificationCode);
-      localStorage.setItem("life_blueprint_contact_id", contact.contactId);
-      localStorage.setItem("life_blueprint_email", contact.email);
-      localStorage.setItem("life_blueprint_email_verified", normalized);
+      sessionStorage.setItem("life_blueprint_contact_id", contact.contactId);
+      sessionStorage.setItem("life_blueprint_email", contact.email);
+      sessionStorage.setItem("life_blueprint_email_verified", normalized);
       setVerifiedEmail(normalized);
       setEmailVerified(true);
     } catch (error) {
@@ -372,7 +372,7 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
               <input
                 type="email"
                 inputMode="email"
-                autoComplete="email"
+                autoComplete="off"
                 value={email}
                 onChange={(event) => {
                   const next = event.target.value;

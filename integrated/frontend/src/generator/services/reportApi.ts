@@ -65,7 +65,7 @@ export async function saveReportToServer(params: {
   /** 后端接入多报告类型后写入 reports.report_type */
   reportType?: string;
 }): Promise<{ statusToken: string }> {
-  const contactId = localStorage.getItem("life_blueprint_contact_id") || "";
+  const contactId = sessionStorage.getItem("life_blueprint_contact_id") || "";
   if (!contactId) throw new Error("Please return to your personal details and verify your email first.");
   const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(params.reportId)}`, {
     method: "PUT",

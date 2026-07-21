@@ -42,6 +42,11 @@ export default function Home() {
   const questionCount = publicSettings?.quizQuestionCount ?? 20;
 
   const handleStartTest = () => {
+    ["life_blueprint_email", "life_blueprint_email_verified", "life_blueprint_contact_id"].forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+    sessionStorage.removeItem("life_blueprint_flow_id");
     window.location.href = "/generator";
   };
 
