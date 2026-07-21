@@ -3,6 +3,7 @@ package com.lifeblueprint.web;
 import com.lifeblueprint.repository.FacebookConversionsRepository;
 import com.lifeblueprint.service.FacebookConversionsService;
 import com.qacollector.dto.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,9 +31,9 @@ public class AdminAnalyticsController {
     }
 
     @PostMapping("/test")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> test() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> test(HttpServletRequest request) {
         if (!conversions.enabled()) return ResponseEntity.badRequest().body(ApiResponse.error("Configure and enable CAPI first"));
-        boolean queued = conversions.enqueueTest();
+        boolean queued = conversions.enqueueTest(AnalyticsController.clientIp(request), request.getHeader("User-Agent"));
         return ResponseEntity.accepted().body(ApiResponse.ok(Map.of("queued", queued)));
     }
 

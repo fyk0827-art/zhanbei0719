@@ -74,11 +74,11 @@ public class FacebookConversionsService {
         }
     }
 
-    public boolean enqueueTest() {
+    public boolean enqueueTest(String clientIp, String userAgent) {
         try {
             if (!enabled()) return false;
             return enqueue("AnalyticsTest", "test:" + java.util.UUID.randomUUID(), System.currentTimeMillis(),
-                "/admin/analytics-test", null, null, null, null, null, null,
+                "/admin/analytics-test", null, null, clientIp, userAgent, null, null,
                 Map.of("test_event", true));
         } catch (Exception e) {
             log.warn("Unable to queue Meta CAPI test event: {}", e.getMessage());
@@ -134,7 +134,12 @@ public class FacebookConversionsService {
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(payload))).build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() / 100 != 2) throw new IllegalStateException("Meta CAPI returned HTTP " + response.statusCode());
+        if (response.statusCode() / 100 != 2) {
+            String error = response.body() == null ? "" : response.body().replaceAll("[\\r\\n]", " ").trim();
+            if (error.length() > 1000) error = error.substring(0, 1000);
+            throw new IllegalStateException("Meta CAPI returned HTTP " + response.statusCode()
+                + (error.isBlank() ? "" : ": " + error));
+        }
         JsonNode body = json.readTree(response.body());
         if (body.path("events_received").asInt(0) < 1) throw new IllegalStateException("Meta CAPI did not accept the event");
         repository.sent(id, body.path("fbtrace_id").asText(""));
