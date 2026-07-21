@@ -158,7 +158,7 @@ export default function QuizFlow({ ageGroups, onClose, initialAge }: QuizFlowPro
 
   const handleContinueToGenerator = async () => {
     sessionStorage.setItem("qaTestTaken", "true");
-    await trackQuizCompleted(sessionStorage.getItem("life_blueprint_flow_id") || "current", reportAnswers.length);
+    await trackQuizCompleted(sessionStorage.getItem("life_blueprint_flow_id") || "current", questions.length);
     window.location.href = "/generator?generate=1";
   };
 
