@@ -80,7 +80,7 @@ export default function ReportAccess() {
       const result = await capturePaypalOrder(paypalOrderId);
       if (!result.paid) throw new Error("PayPal has not confirmed this payment.");
       setPaymentConfirmed(true);
-      trackPurchaseCompleted(paypalOrderId, result.captureId);
+      await trackPurchaseCompleted(paypalOrderId, result.captureId);
       window.history.replaceState({
         ...(window.history.state || {}),
         reportAccessPaypalOrderId: undefined,
@@ -128,7 +128,7 @@ export default function ReportAccess() {
     try {
       const order = await createPaypalOrder(report.reportId, token);
       if (!order.approvalUrl) throw new Error("PayPal did not provide an approval link.");
-      trackCheckoutStarted(order.paypalOrderId);
+      await trackCheckoutStarted(order.paypalOrderId);
       window.location.assign(order.approvalUrl);
     } catch (reason) {
       setPayError(reason instanceof Error ? reason.message : "Unable to start PayPal checkout.");

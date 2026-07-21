@@ -140,7 +140,7 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
     }
   }, [email, verificationCode]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     const errors: Record<string, boolean> = {};
     if (!birthDate) errors.birthDate = true;
     if (!useCustomCoords && !selectedLocation) errors.city = true;
@@ -169,7 +169,7 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
     saveBirthData({ year, month, day, hour, minute, latitude: lat, longitude: lng, timezone: tz, gender, name: name || undefined });
     const flowId = crypto.randomUUID();
     sessionStorage.setItem("life_blueprint_flow_id", flowId);
-    trackPersonalDetailsCompleted(flowId);
+    await trackPersonalDetailsCompleted(flowId);
     window.location.href = "/?quiz=1";
   }, [birthDate, birthTime, birthTimeUnknown, selectedLocation, gender, name, useCustomCoords, customLat, customLng, customTz, emailVerified, email, verifiedEmail]);
 

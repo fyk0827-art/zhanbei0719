@@ -34,11 +34,20 @@ declare global {
 
 const pending = new Map<string, AnalyticsEvent>();
 const capiInFlight = new Set<string>();
+const completedProviders = new Set<string>();
+const capiRetryAttempts = new Map<string, number>();
+const capiRetryTimers = new Map<string, number>();
+const diagnosticMarkers = new Set<string>();
 let settings: PublicSettings | null = null;
 let initializePromise: Promise<void> | null = null;
 let facebookReady = false;
 let la51Ready = false;
+let la51InitStarted = false;
+let la51Initializing = false;
+let la51RetryTimer: number | null = null;
 let lastPagePath = "";
+
+const CAPI_RETRY_DELAYS = [2_000, 5_000, 15_000];
 
 function isProductionUserPage() {
   return ["divinlove.com", "www.divinlove.com"].includes(window.location.hostname)
@@ -92,6 +101,9 @@ function installFacebookQueue() {
 }
 
 async function diagnostic(provider: "la51" | "facebook" | "capi", status: "READY" | "EVENT_SENT" | "ERROR", event?: string, error?: unknown) {
+  const diagnosticKey = `${provider}:${status}:${event || "provider"}`;
+  if (diagnosticMarkers.has(diagnosticKey)) return;
+  diagnosticMarkers.add(diagnosticKey);
   if (import.meta.env.DEV) console.debug(`[analytics] ${provider} ${status}`, event || "", error || "");
   try {
     await fetch("/api/analytics/diagnostics", {
@@ -129,23 +141,34 @@ async function waitForLaTrack(timeoutMs = 30_000) {
 }
 
 async function initializeLa51(config: PublicSettings) {
-  if (!config.la51Enabled || !config.la51SiteId || !config.la51Ck) return;
+  if (!config.la51Enabled || !config.la51SiteId || !config.la51Ck || la51Ready || la51Initializing) return;
+  la51Initializing = true;
   try {
     await loadScript("LA_COLLECT", "https://sdk.51.la/js-sdk-pro.min.js");
-    window.LA?.init?.({
-      id: config.la51SiteId,
-      ck: config.la51Ck,
-      autoTrack: true,
-      hashMode: true,
-      screenRecord: false,
-    });
+    if (!la51InitStarted) {
+      window.LA?.init?.({
+        id: config.la51SiteId,
+        ck: config.la51Ck,
+        autoTrack: true,
+        hashMode: true,
+        screenRecord: false,
+      });
+      la51InitStarted = true;
+    }
     await waitForLaTrack();
     la51Ready = true;
     void diagnostic("la51", "READY");
     flush();
   } catch (error) {
     void diagnostic("la51", "ERROR", undefined, error);
-    window.setTimeout(() => void initializeLa51(config), 5_000);
+    if (la51RetryTimer === null) {
+      la51RetryTimer = window.setTimeout(() => {
+        la51RetryTimer = null;
+        void initializeLa51(config);
+      }, 5_000);
+    }
+  } finally {
+    la51Initializing = false;
   }
 }
 
@@ -172,11 +195,25 @@ function marker(event: AnalyticsEvent, provider: string) {
 }
 
 function wasSent(event: AnalyticsEvent, provider: string) {
-  try { return event.storage?.getItem(marker(event, provider)) === "1"; } catch { return false; }
+  const providerKey = marker(event, provider);
+  if (completedProviders.has(providerKey)) return true;
+  try {
+    const stored = event.storage?.getItem(providerKey) === "1";
+    if (stored) completedProviders.add(providerKey);
+    return stored;
+  } catch {
+    return false;
+  }
 }
 
 function markSent(event: AnalyticsEvent, provider: string) {
-  try { event.storage?.setItem(marker(event, provider), "1"); } catch { /* Private browsing can deny storage. */ }
+  const providerKey = marker(event, provider);
+  completedProviders.add(providerKey);
+  try { event.storage?.setItem(providerKey, "1"); } catch { /* Private browsing can deny storage. */ }
+}
+
+function markTerminal(event: AnalyticsEvent, provider: string) {
+  completedProviders.add(marker(event, provider));
 }
 
 function cleanProperties(event: AnalyticsEvent) {
@@ -187,11 +224,11 @@ function cleanProperties(event: AnalyticsEvent) {
   return Object.fromEntries(Object.entries(properties).filter(([, value]) => value !== undefined));
 }
 
-function sendLa51(event: AnalyticsEvent, properties: EventProperties) {
+function sendLa51(event: AnalyticsEvent) {
   if (event.sourceName === "PageView" || !settings?.la51Enabled || wasSent(event, "la51")) return true;
   if (!la51Ready || typeof window.LA?.track !== "function") return false;
   try {
-    window.LA.track(event.sourceName, properties);
+    window.LA.track(event.sourceName);
     markSent(event, "la51");
     void diagnostic("la51", "EVENT_SENT", event.sourceName);
     return true;
@@ -236,13 +273,29 @@ function sendCapi(event: AnalyticsEvent, properties: EventProperties) {
   }).then((response) => {
     if (!response.ok) throw new Error(`CAPI queue returned ${response.status}`);
     markSent(event, "capi");
+    capiRetryAttempts.delete(event.eventId);
     void diagnostic("capi", "EVENT_SENT", event.sourceName);
-  }).catch((error) => {
-    void diagnostic("capi", "ERROR", event.sourceName, error);
-    window.setTimeout(flush, 2_000);
-  }).finally(() => {
     capiInFlight.delete(event.eventId);
     flush();
+  }).catch((error) => {
+    void diagnostic("capi", "ERROR", event.sourceName, error);
+    capiInFlight.delete(event.eventId);
+    const failedAttempts = (capiRetryAttempts.get(event.eventId) || 0) + 1;
+    capiRetryAttempts.set(event.eventId, failedAttempts);
+    const delay = CAPI_RETRY_DELAYS[failedAttempts - 1];
+    if (delay === undefined) {
+      markTerminal(event, "capi");
+      capiRetryAttempts.delete(event.eventId);
+      flush();
+      return;
+    }
+    if (!capiRetryTimers.has(event.eventId)) {
+      const timer = window.setTimeout(() => {
+        capiRetryTimers.delete(event.eventId);
+        flush();
+      }, delay);
+      capiRetryTimers.set(event.eventId, timer);
+    }
   });
   return false;
 }
@@ -251,18 +304,33 @@ function flush() {
   if (!settings) return;
   pending.forEach((event, key) => {
     const properties = cleanProperties(event);
-    const laDone = sendLa51(event, properties);
+    const laDone = sendLa51(event);
     const fbDone = sendFacebook(event, properties);
     const capiDone = sendCapi(event, properties);
     if (laDone && fbDone && capiDone) pending.delete(key);
   });
 }
 
+function browserProvidersComplete(event: AnalyticsEvent) {
+  if (!settings) return false;
+  const laDone = event.sourceName === "PageView" || !settings.la51Enabled || wasSent(event, "la51");
+  const facebookDone = !settings.facebookPixelEnabled || wasSent(event, "facebook");
+  return laDone && facebookDone;
+}
+
+async function waitForBrowserHandoff(event: AnalyticsEvent, timeoutMs = 300) {
+  const started = Date.now();
+  while (!browserProvidersComplete(event) && Date.now() - started < timeoutMs) {
+    await new Promise((resolve) => window.setTimeout(resolve, 20));
+  }
+}
+
 function emit(event: AnalyticsEvent) {
-  if ([...pending.values()].some((queued) => queued.eventId === event.eventId)) return;
-  pending.set(`${event.sourceName}:${event.eventId}`, event);
+  const key = `${event.sourceName}:${event.eventId}`;
+  if (!pending.has(key)) pending.set(key, event);
   flush();
   void initializeAnalytics();
+  return waitForBrowserHandoff(event);
 }
 
 function eventId(prefix: string, id: string) {
@@ -282,49 +350,49 @@ export function getAnalyticsContext() {
 export function trackPageView(pathname: string) {
   if (pathname.startsWith("/admin") || pathname === lastPagePath) return;
   lastPagePath = pathname;
-  emit({ sourceName: "PageView", facebookName: "PageView", properties: { path: pathname }, eventId: eventId("page", crypto.randomUUID()) });
+  return emit({ sourceName: "PageView", facebookName: "PageView", properties: { path: pathname }, eventId: eventId("page", crypto.randomUUID()) });
 }
 
 export function trackEmailVerified(contactId: string) {
-  emit({ sourceName: "EmailVerified", facebookName: "Lead", properties: { source: "email_verification" }, eventId: eventId("email", contactId), contactId, storage: sessionStorage });
+  return emit({ sourceName: "EmailVerified", facebookName: "Lead", properties: { source: "email_verification" }, eventId: eventId("email", contactId), contactId, storage: sessionStorage });
 }
 
 export function trackPersonalDetailsCompleted(flowId: string) {
-  emit({ sourceName: "PersonalDetailsCompleted", facebookName: "CompleteRegistration", properties: { status: "completed" }, eventId: eventId("details", flowId), storage: sessionStorage });
+  return emit({ sourceName: "PersonalDetailsCompleted", facebookName: "CompleteRegistration", properties: { status: "completed" }, eventId: eventId("details", flowId), storage: sessionStorage });
 }
 
 export function trackQuizCompleted(flowId: string, questionCount: number) {
-  emit({ sourceName: "QuizCompleted", facebookName: "QuizCompleted", facebookCustom: true, properties: { question_count: questionCount }, eventId: eventId("quiz", flowId), storage: sessionStorage });
+  return emit({ sourceName: "QuizCompleted", facebookName: "QuizCompleted", facebookCustom: true, properties: { question_count: questionCount }, eventId: eventId("quiz", flowId), storage: sessionStorage });
 }
 
 export function trackPreviewReportViewed(reportId: string, reportType: string) {
-  emit({ sourceName: "PreviewReportViewed", facebookName: "ViewContent", properties: { content_type: "preview_report", report_type: reportType }, eventId: eventId("preview", reportId), reportId, storage: sessionStorage });
+  return emit({ sourceName: "PreviewReportViewed", facebookName: "ViewContent", properties: { content_type: "preview_report", report_type: reportType }, eventId: eventId("preview", reportId), reportId, storage: sessionStorage });
 }
 
 export function trackCheckoutStarted(paypalOrderId: string, reportType = "full") {
-  emit({ sourceName: "CheckoutStarted", facebookName: "InitiateCheckout", properties: { value: settings?.reportPrice, currency: "USD", report_type: reportType }, eventId: paypalOrderId, storage: sessionStorage });
+  return emit({ sourceName: "CheckoutStarted", facebookName: "InitiateCheckout", properties: { value: settings?.reportPrice, currency: "USD", report_type: reportType }, eventId: paypalOrderId, storage: sessionStorage });
 }
 
 export function trackPurchaseCompleted(paypalOrderId: string, captureId?: string) {
-  emit({ sourceName: "PurchaseCompleted", facebookName: "Purchase", properties: { value: settings?.reportPrice, currency: "USD" }, eventId: captureId || paypalOrderId, storage: localStorage });
+  return emit({ sourceName: "PurchaseCompleted", facebookName: "Purchase", properties: { value: settings?.reportPrice, currency: "USD" }, eventId: captureId || paypalOrderId, storage: localStorage });
 }
 
 export function trackFullReportViewed(reportId: string) {
-  emit({ sourceName: "FullReportViewed", facebookName: "FullReportViewed", facebookCustom: true, properties: { content_type: "full_report" }, eventId: eventId("full", reportId), reportId, storage: localStorage });
+  return emit({ sourceName: "FullReportViewed", facebookName: "FullReportViewed", facebookCustom: true, properties: { content_type: "full_report" }, eventId: eventId("full", reportId), reportId, storage: localStorage });
 }
 
 export function trackShareLinkCreated(shareId: string) {
-  emit({ sourceName: "ShareLinkCreated", facebookName: "ShareLinkCreated", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("share_created", shareId), storage: sessionStorage });
+  return emit({ sourceName: "ShareLinkCreated", facebookName: "ShareLinkCreated", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("share_created", shareId), storage: sessionStorage });
 }
 
 export function trackReportShared(shareId: string, method: "system" | "clipboard") {
-  emit({ sourceName: "ReportShared", facebookName: "ReportShared", facebookCustom: true, properties: { report_type: "full", method }, eventId: eventId("shared", `${shareId}:${crypto.randomUUID()}`) });
+  return emit({ sourceName: "ReportShared", facebookName: "ReportShared", facebookCustom: true, properties: { report_type: "full", method }, eventId: eventId("shared", `${shareId}:${crypto.randomUUID()}`) });
 }
 
 export function trackSharedReportViewed(shareId: string) {
-  emit({ sourceName: "SharedReportViewed", facebookName: "SharedReportViewed", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("shared_view", shareId), storage: sessionStorage });
+  return emit({ sourceName: "SharedReportViewed", facebookName: "SharedReportViewed", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("shared_view", shareId), storage: sessionStorage });
 }
 
 export function trackSharedReportCtaClicked(shareId: string) {
-  emit({ sourceName: "SharedReportCtaClicked", facebookName: "SharedReportCtaClicked", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("shared_cta", `${shareId}:${crypto.randomUUID()}`) });
+  return emit({ sourceName: "SharedReportCtaClicked", facebookName: "SharedReportCtaClicked", facebookCustom: true, properties: { report_type: "full" }, eventId: eventId("shared_cta", `${shareId}:${crypto.randomUUID()}`) });
 }

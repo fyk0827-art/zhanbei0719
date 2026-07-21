@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   PAYMENT_DISABLED,
   capturePaypalOrder,
@@ -31,6 +31,13 @@ export function useReportUnlock(
   const [returnHandled, setReturnHandled] = useState(false);
   const [pollExhausted] = useState(false);
   const paymentMode: PaymentMode = PAYMENT_DISABLED ? "disabled" : "paypal";
+
+  useLayoutEffect(() => {
+    if (!paypalReturnOrderId) return;
+    const clean = new URL(window.location.href);
+    ["paypal", "token", "PayerID"].forEach((key) => clean.searchParams.delete(key));
+    window.history.replaceState({}, "", `${clean.pathname}${clean.search}${clean.hash}`);
+  }, [paypalReturnOrderId]);
 
   const refresh = useCallback(async () => {
     if (!reportId || PAYMENT_DISABLED) { setLoading(false); return; }
@@ -75,12 +82,7 @@ export function useReportUnlock(
       setIsUnlocked(true);
       setTradeNo(result.captureId);
       setPaidAt(Date.now());
-      trackPurchaseCompleted(paypalReturnOrderId, result.captureId);
-      const clean = new URL(window.location.href);
-      clean.searchParams.delete("paypal");
-      clean.searchParams.delete("token");
-      clean.searchParams.delete("PayerID");
-      window.history.replaceState({}, "", clean.toString());
+      await trackPurchaseCompleted(paypalReturnOrderId, result.captureId);
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to confirm PayPal payment.");
@@ -107,7 +109,7 @@ export function useReportUnlock(
       const result = await createPaypalOrder(reportId);
       if (!result.approvalUrl) throw new Error("PayPal did not provide an approval link.");
       sessionStorage.setItem("life_blueprint_paypal_order_id", result.paypalOrderId);
-      trackCheckoutStarted(result.paypalOrderId, reportType);
+      await trackCheckoutStarted(result.paypalOrderId, reportType);
       window.location.assign(result.approvalUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to start PayPal checkout.");
