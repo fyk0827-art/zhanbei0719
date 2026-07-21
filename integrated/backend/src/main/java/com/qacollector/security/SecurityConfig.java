@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/questions").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/questions/answer").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/questions/answers").permitAll()
                 .requestMatchers("/api/questions/random").permitAll()
                 .requestMatchers("/api/questions/by-age/**").permitAll()
                 .requestMatchers("/api/answers").permitAll()

@@ -207,17 +207,38 @@ public class QuestionService {
 
     @Transactional
     public Long submitAnswer(SubmitAnswerRequest req) {
-        String selected = req.getSelectedOption() == null ? "" : req.getSelectedOption().trim();
-        // Accept scale 1–6 (preferred) or legacy A/B keys
-        if (!selected.matches("[1-6]") && !selected.matches("[ABab]")) {
-            throw new IllegalArgumentException("selectedOption must be 1–6 (scale) or A/B");
-        }
-        Answer a = new Answer();
-        a.setQuestionId(req.getQuestionId());
-        a.setRespondentAge(req.getRespondentAge());
-        a.setSelectedOption(selected.toUpperCase());
+        Answer a = toAnswer(req);
         a = answerRepository.save(a);
         return a.getId();
+    }
+
+    @Transactional
+    public int submitAnswers(List<SubmitAnswerRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new IllegalArgumentException("answers must not be empty");
+        }
+        if (requests.size() > 100) {
+            throw new IllegalArgumentException("answers must contain no more than 100 items");
+        }
+        List<Answer> answers = requests.stream().map(this::toAnswer).toList();
+        answerRepository.saveAll(answers);
+        return answers.size();
+    }
+
+    private Answer toAnswer(SubmitAnswerRequest req) {
+        if (req == null || req.getQuestionId() == null || req.getRespondentAge() == null) {
+            throw new IllegalArgumentException("questionId and respondentAge are required");
+        }
+        String selected = req.getSelectedOption() == null ? "" : req.getSelectedOption().trim();
+        // Accept scale 1-6 (preferred) or legacy A/B keys.
+        if (!selected.matches("[1-6]") && !selected.matches("[ABab]")) {
+            throw new IllegalArgumentException("selectedOption must be 1-6 (scale) or A/B");
+        }
+        Answer answer = new Answer();
+        answer.setQuestionId(req.getQuestionId());
+        answer.setRespondentAge(req.getRespondentAge());
+        answer.setSelectedOption(selected.toUpperCase());
+        return answer;
     }
 
     public PageDTO<AnswerDTO> getAllAnswers(int page, int pageSize) {

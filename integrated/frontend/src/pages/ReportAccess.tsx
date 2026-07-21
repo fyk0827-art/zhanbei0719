@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Download, Loader2, Lock, MailCheck } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Download, Loader2, Lock } from "lucide-react";
 import { fetchReportByAccessToken, type FetchReportResponse } from "@/generator/services/reportApi";
 import PrismReportPage from "@/generator/components/prismReport/PrismReportPage";
+import ReportGenerationWait from "@/generator/components/ReportGenerationWait";
 import { prismPrecompute } from "@/generator/services/prismPrecompute";
 import { capturePaypalOrder, createPaypalOrder } from "@/generator/services/paymentApi";
 import { settingsApi } from "@/services/api";
@@ -24,30 +25,70 @@ export default function ReportAccess() {
   const [error, setError] = useState(() => token ? "" : "This report link is incomplete.");
   const [paying, setPaying] = useState(() => Boolean(link.paypalOrderId));
   const [payError, setPayError] = useState("");
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [price, setPrice] = useState("29.90");
 
-  useEffect(() => {
+  const loadReport = useCallback(async () => {
     if (!token) return;
-    fetchReportByAccessToken(token).then(setReport)
-      .catch(() => setError("This private report link is invalid or the report is not available."));
+    const next = await fetchReportByAccessToken(token);
+    setReport(next);
   }, [token]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      loadReport().catch(() => setError("This private report link is invalid or the report is not available."));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadReport]);
 
   useEffect(() => {
     settingsApi.getPublic().then((settings) => setPrice(Number(settings.reportPrice).toFixed(2))).catch(() => undefined);
   }, []);
 
-  useEffect(() => {
+  const confirmPayment = useCallback(async () => {
     const paypalOrderId = link.paypalOrderId;
     if (!paypalOrderId) return;
-    capturePaypalOrder(paypalOrderId)
-      .then((result) => {
-        if (!result.paid) throw new Error("PayPal has not confirmed this payment.");
-        setPaymentSuccess(true);
-      })
-      .catch((reason) => setPayError(reason instanceof Error ? reason.message : "Unable to confirm your payment."))
-      .finally(() => setPaying(false));
-  }, [link.paypalOrderId]);
+    setPaying(true);
+    setPayError("");
+    try {
+      const result = await capturePaypalOrder(paypalOrderId);
+      if (!result.paid) throw new Error("PayPal has not confirmed this payment.");
+      setPaymentConfirmed(true);
+      await loadReport();
+    } catch (reason) {
+      setPayError(reason instanceof Error ? reason.message : "Unable to confirm your payment.");
+    } finally {
+      setPaying(false);
+    }
+  }, [link.paypalOrderId, loadReport]);
+
+  useEffect(() => {
+    if (!link.paypalOrderId) return;
+    const timer = window.setTimeout(() => void confirmPayment(), 0);
+    return () => window.clearTimeout(timer);
+  }, [confirmPayment, link.paypalOrderId]);
+
+  useEffect(() => {
+    const shouldPoll = paymentConfirmed || Boolean(report?.paid && !report.unlocked);
+    if (!token || !shouldPoll || report?.unlocked || payError) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const next = await fetchReportByAccessToken(token);
+        if (cancelled) return;
+        setReport(next);
+        if (next.unlocked) return;
+      } catch {
+        // A transient polling error must not replace the stable waiting screen.
+      }
+      if (!cancelled) window.setTimeout(poll, 2500);
+    };
+    const timer = window.setTimeout(poll, 2500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [payError, paymentConfirmed, report?.paid, report?.unlocked, token]);
 
   const startPay = async () => {
     if (!report?.reportId || !token) return;
@@ -70,16 +111,22 @@ export default function ReportAccess() {
   }) : null, [report]);
 
   if (error) return <Status message={error} />;
+  if (link.paypalOrderId && (!report?.unlocked || paying || payError)) {
+    return (
+      <ReportGenerationWait
+        startedAt={report?.startedAt}
+        error={payError || (report?.generationStatus === "FAILED"
+          ? "We couldn't finish your report yet. The issue has been recorded, and we'll email you after it is retried."
+          : null)}
+        errorTitle={payError ? "We couldn't confirm your payment" : "We couldn't prepare your report"}
+        onRetry={payError ? () => void confirmPayment() : undefined}
+      />
+    );
+  }
   if (!report) return <Status loading message="Opening your private report…" />;
 
-  if (paymentSuccess || (report.paid && !report.unlocked)) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#15101e] px-6 text-center text-white">
-        <MailCheck size={52} className="mb-5 text-[#E8C87A]" />
-        <h1 className="mb-3 font-serif text-3xl">Payment successful</h1>
-        <p className="max-w-md leading-relaxed text-white/70">Your complete report is now being prepared. You can safely close this page. We'll email your private report link as soon as it is ready.</p>
-      </div>
-    );
+  if (report.paid && !report.unlocked) {
+    return <ReportGenerationWait startedAt={report.startedAt} />;
   }
 
   const paywall = !report.unlocked ? (

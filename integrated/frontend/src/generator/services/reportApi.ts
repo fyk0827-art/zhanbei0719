@@ -27,6 +27,10 @@ export interface FetchReportResponse {
   paidAt?: number;
   orders?: ReportOrderInfo[];
   paidOrders?: ReportOrderInfo[];
+  accessScope?: "PREVIEW" | "FULL";
+  generationStatus?: ReportGenerationStatus;
+  startedAt?: number;
+  completedAt?: number;
 }
 
 export type ReportGenerationStatus = "PREVIEW" | "QUEUED" | "GENERATING" | "COMPLETE" | "FAILED";

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import * as echarts from "echarts";
+import { ArrowLeft } from "lucide-react";
 import type { NatalChart } from "../../services/astrologyEngine";
 import {
   parsePrismReportJson,
@@ -556,13 +557,11 @@ export default function PrismReportPage({
 
   return (
     <div className="prism-report" data-planet={pre.theme_planet} ref={rootRef}>
-      <div className="prism-wrap prism-toolbar">
-        {onBack && (
-          <button type="button" onClick={onBack}>
-            ← Back
-          </button>
-        )}
-      </div>
+      {onBack && (
+        <button type="button" className="prism-back-floating" onClick={onBack} aria-label="Back" title="Back">
+          <ArrowLeft size={20} aria-hidden="true" />
+        </button>
+      )}
 
       <header className="prism-banner">
         <div className="prism-wrap prism-banner-inner">

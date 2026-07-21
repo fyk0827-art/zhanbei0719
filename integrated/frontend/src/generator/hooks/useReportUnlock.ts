@@ -13,6 +13,7 @@ export function useReportUnlock(
   reportId: string | null,
   _options?: { reportType?: ReportTypeId }
 ) {
+  void _options;
   const [isUnlocked, setIsUnlocked] = useState(PAYMENT_DISABLED);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paidAt, setPaidAt] = useState<number | null>(null);
@@ -22,6 +23,11 @@ export function useReportUnlock(
   const [error, setError] = useState<string | null>(null);
   const [reportPrice, setReportPrice] = useState<string | null>(null);
   const [confirmingReturn, setConfirmingReturn] = useState(false);
+  const [paypalReturnOrderId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("paypal") === "return" ? params.get("token") : null;
+  });
+  const [returnHandled, setReturnHandled] = useState(false);
   const [pollExhausted] = useState(false);
   const paymentMode: PaymentMode = PAYMENT_DISABLED ? "disabled" : "paypal";
 
@@ -40,7 +46,10 @@ export function useReportUnlock(
     }
   }, [reportId]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(timer);
+  }, [refresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,32 +63,39 @@ export function useReportUnlock(
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("paypal") !== "return") return;
-    const paypalOrderId = params.get("token");
-    if (!paypalOrderId) return;
-    let cancelled = false;
+  const confirmPaypalReturn = useCallback(async () => {
+    if (!paypalReturnOrderId) return;
     setConfirmingReturn(true);
     setPaying(true);
-    capturePaypalOrder(paypalOrderId)
-      .then((result) => {
-        if (cancelled) return;
-        if (!result.paid) throw new Error("PayPal has not confirmed this payment.");
-        setIsUnlocked(true);
-        setTradeNo(result.captureId);
-        setPaidAt(Date.now());
-        const clean = new URL(window.location.href);
-        clean.searchParams.delete("paypal");
-        clean.searchParams.delete("token");
-        clean.searchParams.delete("PayerID");
-        window.history.replaceState({}, "", clean.toString());
-        return refresh();
-      })
-      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Unable to confirm PayPal payment."))
-      .finally(() => { if (!cancelled) { setConfirmingReturn(false); setPaying(false); } });
-    return () => { cancelled = true; };
-  }, [refresh]);
+    setError(null);
+    try {
+      const result = await capturePaypalOrder(paypalReturnOrderId);
+      if (!result.paid) throw new Error("PayPal has not confirmed this payment.");
+      setIsUnlocked(true);
+      setTradeNo(result.captureId);
+      setPaidAt(Date.now());
+      const clean = new URL(window.location.href);
+      clean.searchParams.delete("paypal");
+      clean.searchParams.delete("token");
+      clean.searchParams.delete("PayerID");
+      window.history.replaceState({}, "", clean.toString());
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to confirm PayPal payment.");
+    } finally {
+      setConfirmingReturn(false);
+      setPaying(false);
+    }
+  }, [paypalReturnOrderId, refresh]);
+
+  useEffect(() => {
+    if (!paypalReturnOrderId || returnHandled) return;
+    const timer = window.setTimeout(() => {
+      setReturnHandled(true);
+      void confirmPaypalReturn();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [confirmPaypalReturn, paypalReturnOrderId, returnHandled]);
 
   const startPay = useCallback(async () => {
     if (PAYMENT_DISABLED || !reportId) return;
@@ -109,9 +125,11 @@ export function useReportUnlock(
     isWeChatInApp: false,
     paymentMode,
     confirmingReturn,
+    returnedFromPaypal: Boolean(paypalReturnOrderId),
     pollExhausted,
     reportPrice,
     startPay,
     refresh,
+    retryPaymentReturn: confirmPaypalReturn,
   };
 }

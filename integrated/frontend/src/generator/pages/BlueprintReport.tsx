@@ -23,6 +23,7 @@ import { generatorPath } from "../utils/generatorNav";
 import { ReportDeepReadingCTA } from "../components/ReportDeepReadingCTA";
 import { PaywallCard, LockedPreview } from "../components/ReportPaywall";
 import { ReportIdentitySection } from "../components/ReportIdentitySection";
+import ReportGenerationWait from "../components/ReportGenerationWait";
 import { MarriageReportView, parseMarriageCoverMeta } from "../components/MarriageReportView";
 import { CareerReportView, parseCareerCoverMeta } from "../components/CareerReportView";
 import { PAYMENT_DISABLED } from "../services/paymentApi";
@@ -56,31 +57,6 @@ const PLANET_ICONS: Record<string, ElementType> = {
 };
 const TALENT_COLORS = [PRIMARY, PURPLE_MID, PURPLE_LIGHT];
 const PHASE_COLORS = [PRIMARY, PURPLE_MID, DARK];
-
-function ReportGenerationWait({ startedAt }: { startedAt: number | null }) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(timer);
-  }, []);
-  const elapsed = startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0;
-  const remaining = Math.max(0, 180 - elapsed);
-  const label = `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
-  return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#0D1B2A", color: "#FAF6F0" }}>
-      <div className="w-full max-w-md text-center">
-        <div className="mx-auto mb-7 h-12 w-12 rounded-full border-2 border-white/20 border-t-[#E8C87A] animate-spin" />
-        <h1 className="prism-font-serif text-2xl font-semibold mb-3">Your complete report is being prepared</h1>
-        {remaining > 0 ? (
-          <p className="text-lg mb-4" style={{ color: "#E8C87A" }}>Estimated time remaining: {label}</p>
-        ) : (
-          <p className="text-lg mb-4" style={{ color: "#E8C87A" }}>Your report is still being prepared</p>
-        )}
-        <p className="text-sm leading-relaxed text-white/60">You can safely leave this page. We'll email your report when it's ready.</p>
-      </div>
-    </div>
-  );
-}
 
 const LIFE_AREA_META: { keys: string[]; title: string; icon: ElementType }[] = [
   { keys: ["恋爱", "亲密"], title: "恋爱与亲密关系", icon: Heart },
@@ -593,11 +569,12 @@ export default function BlueprintReport({ chart }: Props) {
     wechatHint,
     isWeChatInApp,
     paymentMode,
-    confirmingReturn,
+    returnedFromPaypal,
     pollExhausted,
     reportPrice,
     startPay,
     refresh: refreshUnlock,
+    retryPaymentReturn,
   } = useReportUnlock(reportId, { reportType });
   const reportMeta = reportPrice
     ? { ...baseReportMeta, priceYuan: reportPrice }
@@ -797,18 +774,22 @@ export default function BlueprintReport({ chart }: Props) {
 
   const paymentLabels = getPaymentLabels(paymentMode);
 
-  const paymentReturnOrderId =
-    getRouterSearchParams().get("orderId") || getRouterSearchParams().get("out_trade_no");
+  if (returnedFromPaypal && !hasAiReport) {
+    return (
+      <ReportGenerationWait
+        startedAt={generationStartedAt}
+        error={payError || genError}
+        errorTitle={payError ? "We couldn't confirm your payment" : "We couldn't prepare your report"}
+        onRetry={payError ? () => void retryPaymentReturn() : undefined}
+      />
+    );
+  }
 
   if (!activeChart) {
-    const waitingPay =
-      Boolean(paymentReturnOrderId) &&
-      (confirmingReturn || restoring || unlockLoading || (!isUnlocked && !pollExhausted));
     let statusText: string;
     if (payError) statusText = payError;
     else if (pollExhausted && !isUnlocked)
       statusText = "We haven't confirmed the payment yet. Please wait a moment, then check again.";
-    else if (waitingPay) statusText = "Confirming your payment and restoring your report…";
     else if (restoring) statusText = "Restoring your report…";
     else if (reportId)
       statusText = "We couldn't restore this report yet. Please check again in a moment.";

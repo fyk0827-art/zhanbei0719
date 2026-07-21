@@ -79,6 +79,7 @@ public class ReportDeliveryService {
             body.put("reportText", full ? row.get("full_report_text") : row.get("report_text"));
             body.put("chartJson", parseJson(row.get("chart_json")));
             body.put("language", row.get("language"));
+            body.put("startedAt", row.get("generation_started_at"));
             body.put("completedAt", row.get("generation_completed_at"));
             body.put("accessScope", scope);
             body.put("unlocked", full);

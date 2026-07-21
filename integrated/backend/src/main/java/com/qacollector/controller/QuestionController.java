@@ -29,4 +29,9 @@ public class QuestionController {
     public ApiResponse<Long> submitAnswer(@RequestBody SubmitAnswerRequest req) {
         return ApiResponse.ok(questionService.submitAnswer(req));
     }
+
+    @PostMapping("/answers")
+    public ApiResponse<BatchSubmitAnswersResponse> submitAnswers(@RequestBody BatchSubmitAnswersRequest req) {
+        return ApiResponse.ok(new BatchSubmitAnswersResponse(questionService.submitAnswers(req.getAnswers())));
+    }
 }

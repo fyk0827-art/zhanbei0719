@@ -10,7 +10,6 @@ import type {
   LoginResponse,
   SubmitAnswerRequest,
   CreateQuestionRequest,
-  UpdateQuestionRequest,
   PaymentCreateRequest,
   PaymentCreateResponse,
   PaymentCompleteRequest,
@@ -120,6 +119,19 @@ export const questionApi = {
     get<QuestionDTO[]>("/questions", { ageGroupId, language }),
   submitAnswer: (req: SubmitAnswerRequest) =>
     post<number>("/questions/answer", req),
+  submitAnswersBatch: async (answers: SubmitAnswerRequest[]) => {
+    const response = await fetch(`${API_BASE}/api/questions/answers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers }),
+      keepalive: true,
+    });
+    const payload = await response.json() as ApiResponse<{ saved: number }>;
+    if (!response.ok || !payload.success) {
+      throw new Error(payload.message || "Unable to save quiz answers");
+    }
+    return payload.data;
+  },
 };
 
 // ======== Admin Question API ========

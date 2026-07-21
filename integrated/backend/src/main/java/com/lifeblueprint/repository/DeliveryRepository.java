@@ -179,7 +179,7 @@ public class DeliveryRepository {
         try {
             return Optional.ofNullable(jdbc.queryForMap("""
                 SELECT r.report_id, r.display_name, r.report_text, r.full_report_text, r.chart_json, r.language,
-                       r.generation_status, r.generation_completed_at, t.access_scope,
+                       r.generation_status, r.generation_started_at, r.generation_completed_at, t.access_scope,
                        CASE WHEN u.report_id IS NULL THEN 0 ELSE 1 END paid
                 FROM report_access_tokens t JOIN reports r ON r.report_id=t.report_id
                 LEFT JOIN unlocks u ON u.report_id=r.report_id

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { X, Check, ChevronRight, Loader2 } from "lucide-react";
 import { questionApi, settingsApi } from "@/services/api";
 import type { QuestionDTO } from "@/types/api";
@@ -90,24 +90,20 @@ export default function QuizFlow({ ageGroups, onClose, initialAge }: QuizFlowPro
 
   const TOTAL = questions.length;
 
-  const submitAnswerMutation = useMutation({
-    mutationFn: questionApi.submitAnswer,
-  });
-
   const choose = (value: number) => {
     if (choosing || !questions[currentQIndex]) return;
     setChoosing(true);
     const next = [...answers];
     next[currentQIndex] = value;
     setAnswers(next);
+    if (currentQIndex === TOTAL - 1) {
+      finishQuiz(next);
+      return;
+    }
     setTimeout(() => {
-      if (currentQIndex < TOTAL - 1) {
-        setCurrentQIndex((p) => p + 1);
-        setSlideKey((k) => k + 1);
-        setChoosing(false);
-      } else {
-        void finishQuiz(next);
-      }
+      setCurrentQIndex((p) => p + 1);
+      setSlideKey((k) => k + 1);
+      setChoosing(false);
     }, 300);
   };
 
@@ -117,7 +113,7 @@ export default function QuizFlow({ ageGroups, onClose, initialAge }: QuizFlowPro
     setSlideKey((k) => k + 1);
   };
 
-  const finishQuiz = async (finalAnswers: (number | null)[]) => {
+  const finishQuiz = (finalAnswers: (number | null)[]) => {
     if (!matchedGroup) return;
     const age = parseInt(userAge);
 
@@ -141,24 +137,21 @@ export default function QuizFlow({ ageGroups, onClose, initialAge }: QuizFlowPro
       completedAt: new Date().toISOString(),
     });
 
-    // Persist scale scores 1–6 to backend
-    try {
-      for (let i = 0; i < questions.length; i++) {
-        const score = finalAnswers[i];
-        if (score == null) continue;
-        await submitAnswerMutation.mutateAsync({
-          questionId: questions[i].id,
-          respondentAge: age,
-          selectedOption: String(score),
-        });
-      }
-    } catch {
-      // Keep local report even if save fails
-    }
-
     setAnswers(finalAnswers);
     setStep("result");
     setChoosing(false);
+
+    const answerBatch = questions.flatMap((question, index) => {
+      const score = finalAnswers[index];
+      return score == null ? [] : [{
+        questionId: question.id,
+        respondentAge: age,
+        selectedOption: String(score),
+      }];
+    });
+    void questionApi.submitAnswersBatch(answerBatch).catch((error) => {
+      console.warn("Quiz answers could not be saved", error);
+    });
   };
 
   const handleContinueToGenerator = () => {
