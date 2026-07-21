@@ -112,23 +112,47 @@ export default function ReportAccess() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f4ee] text-[#261f30] print:bg-white">
-      <header className="sticky top-0 z-20 border-b border-black/10 bg-[#f7f4ee]/95 px-4 py-3 backdrop-blur print:hidden">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
-          <div><p className="text-xs uppercase tracking-[0.2em] text-[#7b6691]">PRISM</p><p className="text-sm font-medium">Complete Life Blueprint</p></div>
-          <button type="button" onClick={() => window.print()} title="Download or print" className="flex h-10 w-10 items-center justify-center rounded-md border border-black/10 bg-white"><Download size={18} /></button>
+    <main className="min-h-screen bg-[#f4f1eb] text-[#251f2c] print:bg-white">
+      <button
+        type="button"
+        onClick={() => window.print()}
+        title="Download or print"
+        aria-label="Download or print"
+        className="fixed right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-md border border-white/20 bg-black/35 text-white shadow-lg backdrop-blur print:hidden"
+      >
+        <Download size={18} />
+      </button>
+
+      <header className="bg-[#17131c] text-white">
+        <div className="mx-auto max-w-4xl px-5 pb-14 pt-16 sm:px-8 sm:pb-20 sm:pt-24">
+          <p className="mb-8 text-xs font-semibold text-[#d7b968]">PRISM LIFE SCRIPT</p>
+          <h1 className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">
+            {report.displayName ? `${report.displayName}'s Life Blueprint` : "Your Life Blueprint"}
+          </h1>
+          <div className="mt-8 h-px w-20 bg-[#d7b968]" />
+          <p className="mt-6 max-w-xl text-sm leading-7 text-white/60">
+            A private reading of your inner patterns, relationships, direction and next steps.
+          </p>
         </div>
       </header>
-      <article className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
-        <p className="mb-3 text-sm uppercase tracking-[0.18em] text-[#7b6691]">Your personalized report</p>
-        <h1 className="mb-10 font-serif text-4xl leading-tight sm:text-5xl">{report.displayName ? `${report.displayName}'s Life Blueprint` : "Your Life Blueprint"}</h1>
-        <div className="space-y-6 text-[17px] leading-8 text-[#3f3747]">
+
+      <article className="mx-auto max-w-4xl px-5 py-12 sm:px-8 sm:py-16">
+        <div className="text-[17px] leading-8 text-[#4a4350]">
           {blocks.map((block, index) => {
             const clean = block.replace(/^#{1,4}\s*/, "").replace(/\*\*/g, "").trim();
+            if (!clean || /^-{3,}$/.test(clean)) {
+              return <div key={index} className="my-10 h-px bg-[#d8d0c3]" aria-hidden="true" />;
+            }
             const heading = /^#{1,4}\s/.test(block) || /^【.+】$/.test(clean);
-            return heading
-              ? <h2 key={index} className="pt-6 font-serif text-2xl leading-snug text-[#261f30]">{clean.replace(/[【】]/g, "")}</h2>
-              : <p key={index} className="whitespace-pre-line">{clean}</p>;
+            if (heading) {
+              return (
+                <div key={index} className="mb-6 mt-14 border-t border-[#d8d0c3] pt-8 first:mt-0 first:border-0 first:pt-0">
+                  <p className="mb-2 text-xs font-semibold text-[#9a7627]">LIFE SCRIPT</p>
+                  <h2 className="font-serif text-3xl leading-snug text-[#251f2c]">{clean.replace(/[【】]/g, "")}</h2>
+                </div>
+              );
+            }
+            return <p key={index} className="mb-6 max-w-3xl whitespace-pre-line">{clean}</p>;
           })}
         </div>
         {paywall}
