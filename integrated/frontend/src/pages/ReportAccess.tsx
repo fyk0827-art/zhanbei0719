@@ -7,6 +7,7 @@ import { prismPrecompute } from "@/generator/services/prismPrecompute";
 import { capturePaypalOrder, createPaypalOrder } from "@/generator/services/paymentApi";
 import { settingsApi } from "@/services/api";
 import { trackCheckoutStarted, trackFullReportViewed, trackPreviewReportViewed, trackPurchaseCompleted } from "@/services/analytics";
+import ShareReportButton from "@/generator/components/ShareReportButton";
 
 interface ReportAccessHistoryState {
   reportAccessToken?: string;
@@ -175,15 +176,18 @@ export default function ReportAccess() {
   if (report.chartJson && prismPre && report.reportText) {
     return (
       <>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          title="Download or print"
-          aria-label="Download or print"
-          className="report-access-print fixed right-4 top-4 z-[130] flex h-11 w-11 items-center justify-center rounded-md border border-white/25 bg-black/45 text-white shadow-lg backdrop-blur"
-        >
-          <Download size={18} />
-        </button>
+        <div className="report-access-print fixed right-4 top-4 z-[130] flex gap-2 print:hidden">
+          {report.unlocked && <ShareReportButton reportId={report.reportId} accessToken={token} />}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            title="Download or print"
+            aria-label="Download or print"
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-white/25 bg-black/45 text-white shadow-lg backdrop-blur"
+          >
+            <Download size={18} />
+          </button>
+        </div>
         <PrismReportPage chart={report.chartJson} pre={prismPre} reportText={report.reportText} previewOnly={!report.unlocked} isUnlocked={report.unlocked} paywallSlot={paywall} />
       </>
     );
@@ -191,15 +195,18 @@ export default function ReportAccess() {
 
   return (
     <main className="min-h-screen bg-[#f4f1eb] text-[#251f2c] print:bg-white">
-      <button
-        type="button"
-        onClick={() => window.print()}
-        title="Download or print"
-        aria-label="Download or print"
-        className="fixed right-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-md border border-white/20 bg-black/35 text-white shadow-lg backdrop-blur print:hidden"
-      >
-        <Download size={18} />
-      </button>
+      <div className="fixed right-4 top-4 z-30 flex gap-2 print:hidden">
+        {report.unlocked && <ShareReportButton reportId={report.reportId} accessToken={token} />}
+        <button
+          type="button"
+          onClick={() => window.print()}
+          title="Download or print"
+          aria-label="Download or print"
+          className="flex h-11 w-11 items-center justify-center rounded-md border border-white/20 bg-black/35 text-white shadow-lg backdrop-blur"
+        >
+          <Download size={18} />
+        </button>
+      </div>
 
       <header className="bg-[#17131c] text-white">
         <div className="mx-auto max-w-4xl px-5 pb-14 pt-16 sm:px-8 sm:pb-20 sm:pt-24">

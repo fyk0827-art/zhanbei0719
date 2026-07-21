@@ -346,6 +346,7 @@ function luckFromScores(scoreCard: Record<string, number>, top1Score: number): {
 export interface PrismPrecomputeOptions {
   name?: string;
   gender?: string;
+  age?: number;
 }
 
 /** Main entry: NatalChart → product JSON for prompts + page. */
@@ -564,7 +565,7 @@ export function prismPrecompute(chart: NatalChart, opts: PrismPrecomputeOptions 
     },
   ];
 
-  const age = calcAge(chart.birthData);
+  const age = opts.age ?? calcAge(chart.birthData);
   const fir = getFirdaria(age, isDay);
   const firdaria = {
     age,

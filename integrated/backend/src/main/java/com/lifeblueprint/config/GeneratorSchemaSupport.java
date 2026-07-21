@@ -156,6 +156,14 @@ public final class GeneratorSchemaSupport {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """);
         ensureColumn(jdbc, "email_deliveries", "delivery_type", "ALTER TABLE email_deliveries ADD COLUMN delivery_type VARCHAR(16) NOT NULL DEFAULT 'FULL' AFTER updated_at");
+        jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS report_shares (
+              share_id VARCHAR(43) NOT NULL PRIMARY KEY,
+              report_id VARCHAR(32) NOT NULL,
+              created_at BIGINT NOT NULL,
+              UNIQUE KEY uk_report_shares_report (report_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """);
     }
 
     private static boolean tableExists(JdbcTemplate jdbc, String table) {

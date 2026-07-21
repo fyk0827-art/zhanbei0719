@@ -216,3 +216,31 @@ export function trackFullReportViewed(reportId: string) {
     la51Name: "FullReportViewed", facebookName: "FullReportViewed", facebookCustom: true, properties: { content_type: "full_report" },
   }));
 }
+
+export function trackShareLinkCreated(shareId: string) {
+  once(sessionStorage, `share_created_${shareId}`, () => emit({
+    la51Name: "ShareLinkCreated", facebookName: "ShareLinkCreated", facebookCustom: true,
+    properties: { share_id: shareId, report_type: "full" },
+  }));
+}
+
+export function trackReportShared(shareId: string, method: "system" | "clipboard") {
+  emit({
+    la51Name: "ReportShared", facebookName: "ReportShared", facebookCustom: true,
+    properties: { share_id: shareId, report_type: "full", method },
+  });
+}
+
+export function trackSharedReportViewed(shareId: string) {
+  once(sessionStorage, `shared_view_${shareId}`, () => emit({
+    la51Name: "SharedReportViewed", facebookName: "SharedReportViewed", facebookCustom: true,
+    properties: { share_id: shareId, report_type: "full" },
+  }));
+}
+
+export function trackSharedReportCtaClicked(shareId: string) {
+  emit({
+    la51Name: "SharedReportCtaClicked", facebookName: "SharedReportCtaClicked", facebookCustom: true,
+    properties: { share_id: shareId, report_type: "full" },
+  });
+}

@@ -232,6 +232,38 @@ public class DeliveryRepository {
         } catch (EmptyResultDataAccessException e) { return Optional.empty(); }
     }
 
+    public boolean shareEligible(String reportId) {
+        Integer count = jdbc.queryForObject("""
+            SELECT COUNT(*) FROM reports r JOIN unlocks u ON u.report_id=r.report_id
+            WHERE r.report_id=? AND r.generation_status='COMPLETE'
+              AND r.full_report_text IS NOT NULL AND r.full_report_text<>''
+            """, Integer.class, reportId);
+        return count != null && count > 0;
+    }
+
+    @Transactional
+    public String createOrGetShare(String reportId, String shareId) {
+        jdbc.update("""
+            INSERT IGNORE INTO report_shares (share_id, report_id, created_at) VALUES (?, ?, ?)
+            """, shareId, reportId, System.currentTimeMillis());
+        return jdbc.queryForObject(
+            "SELECT share_id FROM report_shares WHERE report_id=? LIMIT 1", String.class, reportId);
+    }
+
+    public Optional<Map<String, Object>> sharedReport(String shareId) {
+        try {
+            return Optional.ofNullable(jdbc.queryForMap("""
+                SELECT r.display_name, r.full_report_text, r.chart_json, r.language
+                FROM report_shares s JOIN reports r ON r.report_id=s.report_id
+                JOIN unlocks u ON u.report_id=r.report_id
+                WHERE s.share_id=? AND r.generation_status='COMPLETE'
+                  AND r.full_report_text IS NOT NULL AND r.full_report_text<>'' LIMIT 1
+                """, shareId));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     public void enqueueEmail(String reportId, String recipient, String deliveryType) {
         long now = System.currentTimeMillis();
         jdbc.update("""

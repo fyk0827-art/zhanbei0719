@@ -71,6 +71,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/contacts/**").permitAll()
                 .requestMatchers("/api/paypal/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/report-access/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/shared-reports/**").permitAll()
                 .requestMatchers("/api/reports/**").permitAll()
                 .requestMatchers("/api/orders/**").permitAll()
                 .requestMatchers("/api/unlock/**").permitAll()

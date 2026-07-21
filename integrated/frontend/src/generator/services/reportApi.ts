@@ -33,6 +33,20 @@ export interface FetchReportResponse {
   completedAt?: number;
 }
 
+export interface SharedReportResponse {
+  displayName: string;
+  age: number;
+  gender: "male" | "female";
+  reportText: string;
+  chartJson: Omit<NatalChart, "birthData"> & { birthData: { gender: "male" | "female" } };
+  language: string;
+}
+
+export interface ReportShareResponse {
+  shareId: string;
+  shareUrl: string;
+}
+
 export type ReportGenerationStatus = "PREVIEW" | "QUEUED" | "GENERATING" | "COMPLETE" | "FAILED";
 export interface ReportStatusResponse {
   reportId: string;
@@ -97,6 +111,23 @@ export async function fetchReportStatus(reportId: string): Promise<ReportStatusR
 
 export async function fetchReportByAccessToken(token: string): Promise<FetchReportResponse> {
   const res = await fetch(`${API_BASE}/api/report-access/${encodeURIComponent(token)}`);
+  return parseJson(res);
+}
+
+export async function createReportShare(reportId: string, accessToken?: string): Promise<ReportShareResponse> {
+  const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}/share`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      statusToken: loadReportStatusToken(reportId) || undefined,
+      accessToken: accessToken || undefined,
+    }),
+  });
+  return parseJson(res);
+}
+
+export async function fetchSharedReport(shareId: string): Promise<SharedReportResponse> {
+  const res = await fetch(`${API_BASE}/api/shared-reports/${encodeURIComponent(shareId)}`);
   return parseJson(res);
 }
 

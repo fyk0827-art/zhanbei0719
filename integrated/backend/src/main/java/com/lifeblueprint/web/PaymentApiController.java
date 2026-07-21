@@ -4,6 +4,7 @@ import com.lifeblueprint.config.PaymentProperties;
 import com.lifeblueprint.domain.OrderRecord;
 import com.lifeblueprint.service.PaymentService;
 import com.lifeblueprint.service.ReportDeliveryService;
+import com.lifeblueprint.service.ReportShareService;
 import com.lifeblueprint.web.dto.CreateOrderRequest;
 import com.lifeblueprint.web.dto.SaveReportRequest;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,11 +25,14 @@ public class PaymentApiController {
     private final PaymentService paymentService;
     private final PaymentProperties props;
     private final ReportDeliveryService reportDelivery;
+    private final ReportShareService reportShares;
 
-    public PaymentApiController(PaymentService paymentService, PaymentProperties props, ReportDeliveryService reportDelivery) {
+    public PaymentApiController(PaymentService paymentService, PaymentProperties props,
+                                ReportDeliveryService reportDelivery, ReportShareService reportShares) {
         this.paymentService = paymentService;
         this.props = props;
         this.reportDelivery = reportDelivery;
+        this.reportShares = reportShares;
     }
 
     @GetMapping("/health")
@@ -67,6 +71,27 @@ public class PaymentApiController {
         return reportDelivery.access(token).map(ResponseEntity::ok)
             .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Report link is invalid or unavailable")));
     }
+
+    @PostMapping("/reports/{reportId}/share")
+    public ResponseEntity<Map<String, Object>> createShare(
+            @PathVariable String reportId,
+            @RequestBody(required = false) ShareReportRequest body
+    ) {
+        String statusToken = body == null ? null : body.statusToken();
+        String accessToken = body == null ? null : body.accessToken();
+        return reportShares.create(reportId, statusToken, accessToken).map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Report is not available for sharing")));
+    }
+
+    @GetMapping("/shared-reports/{shareId}")
+    public ResponseEntity<Map<String, Object>> sharedReport(@PathVariable String shareId) {
+        return reportShares.get(shareId).map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", "Shared report is unavailable")));
+    }
+
+    public record ShareReportRequest(String statusToken, String accessToken) {}
 
     @GetMapping("/reports/{reportId}")
     public ResponseEntity<Map<String, Object>> getReport(

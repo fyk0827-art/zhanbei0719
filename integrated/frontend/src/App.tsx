@@ -9,6 +9,7 @@ import GeneratorApp from "./generator/App";
 import ReportAccess from "./pages/ReportAccess";
 import { Toaster } from "@/components/ui/sonner";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+import SharedReport from "@/pages/SharedReport";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/generator/*" element={<GeneratorApp />} />
         <Route path="/report-access" element={<ReportAccess />} />
+        <Route path="/shared-report/:shareId" element={<SharedReport />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

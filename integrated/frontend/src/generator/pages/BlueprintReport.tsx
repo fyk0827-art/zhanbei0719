@@ -13,7 +13,7 @@ import { isPreviewReport500, generateBirthReport500, previewMatchesLocale } from
 import BirthReport500View from "../components/BirthReport500View";
 import PrismReportPage from "../components/prismReport/PrismReportPage";
 import { prismPrecompute, buildPrismPreviewCopy } from "../services/prismPrecompute";
-import { fetchReportFromServer, fetchReportStatus, saveReportToServer } from "../services/reportApi";
+import { fetchReportFromServer, fetchReportStatus, loadReportStatusToken, saveReportToServer } from "../services/reportApi";
 import { runV2Calculations } from "../services/v2ScoringEngine";
 import { computeReportId } from "../services/reportId";
 import { useReportUnlock } from "../hooks/useReportUnlock";
@@ -24,6 +24,7 @@ import { ReportDeepReadingCTA } from "../components/ReportDeepReadingCTA";
 import { PaywallCard, LockedPreview } from "../components/ReportPaywall";
 import { ReportIdentitySection } from "../components/ReportIdentitySection";
 import ReportGenerationWait from "../components/ReportGenerationWait";
+import ShareReportButton from "../components/ShareReportButton";
 import { MarriageReportView, parseMarriageCoverMeta } from "../components/MarriageReportView";
 import { CareerReportView, parseCareerCoverMeta } from "../components/CareerReportView";
 import { PAYMENT_DISABLED } from "../services/paymentApi";
@@ -530,6 +531,7 @@ export default function BlueprintReport({ chart }: Props) {
   const [restoredChart, setRestoredChart] = useState<NatalChart | null>(null);
   const activeChart = chart ?? restoredChart ?? getGlobalChart();
   const [restoring, setRestoring] = useState(false);
+  const [restoreAccessDenied, setRestoreAccessDenied] = useState(false);
   const reportType = parseReportTypeId(
     getRouterSearchParams().get("reportType") || getGlobalReportType()
   );
@@ -686,12 +688,17 @@ export default function BlueprintReport({ chart }: Props) {
   /** 支付宝回跳后内存中无 chart，从服务器恢复（解锁后才有 chartJson / 全文） */
   useEffect(() => {
     if (chart || !reportId) return;
+    if (!loadReportStatusToken(reportId)) {
+      setRestoreAccessDenied(true);
+      return;
+    }
     let cancelled = false;
     setRestoring(true);
     (async () => {
       try {
         const data = await fetchReportFromServer(reportId);
         if (cancelled) return;
+        if (!data?.chartJson) setRestoreAccessDenied(true);
         if (data?.chartJson) setRestoredChart(data.chartJson);
         if (data?.reportText) {
           setReportText(data.reportText);
@@ -700,7 +707,7 @@ export default function BlueprintReport({ chart }: Props) {
           if (!isPreviewReport500(data.reportText)) markAiReportDone(reportType);
         }
       } catch {
-        /* ignore */
+        if (!cancelled) setRestoreAccessDenied(true);
       } finally {
         if (!cancelled) setRestoring(false);
       }
@@ -796,12 +803,17 @@ export default function BlueprintReport({ chart }: Props) {
     else if (pollExhausted && !isUnlocked)
       statusText = "We haven't confirmed the payment yet. Please wait a moment, then check again.";
     else if (restoring) statusText = "Restoring your report…";
+    else if (reportId && restoreAccessDenied)
+      statusText = "This browser does not have access to this private report. Open the secure link from your email.";
     else if (reportId)
       statusText = "We couldn't restore this report yet. Please check again in a moment.";
     else statusText = "Please enter your birth details before opening a report.";
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center" style={{ background: "#0D1B2A", color: "#9CA3AF" }}>
         <p>{statusText}</p>
+        {reportId && restoreAccessDenied && (
+          <button type="button" className="rounded-md border border-white/20 px-4 py-2 text-sm text-white" onClick={() => navigate(generatorPath())}>Back to home</button>
+        )}
         {(pollExhausted || payError) && (
           <button
             type="button"
@@ -878,14 +890,17 @@ export default function BlueprintReport({ chart }: Props) {
 
   if (isPrismLifeScript && prismPre && hasAiReport && reportText) {
     return (
-      <PrismReportPage
-        chart={activeChart}
-        pre={prismPre}
-        reportText={reportText}
-        previewOnly={false}
-        isUnlocked
-        onBack={() => navigate(generatorPath())}
-      />
+      <>
+        {reportId && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={reportId} /></div>}
+        <PrismReportPage
+          chart={activeChart}
+          pre={prismPre}
+          reportText={reportText}
+          previewOnly={false}
+          isUnlocked
+          onBack={() => navigate(generatorPath())}
+        />
+      </>
     );
   }
 
@@ -1110,6 +1125,8 @@ export default function BlueprintReport({ chart }: Props) {
       .trim();
 
     return (
+      <>
+      {reportId && hasAiReport && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={reportId} /></div>}
       <MarriageReportView
         name={name}
         roleLabel={marriageRole}
@@ -1137,6 +1154,7 @@ export default function BlueprintReport({ chart }: Props) {
         paymentPayingLabel={paymentLabels.paying}
         paymentButtonColor={paymentLabels.buttonColor}
       />
+      </>
     );
   }
 
@@ -1163,6 +1181,8 @@ export default function BlueprintReport({ chart }: Props) {
       .trim();
 
     return (
+      <>
+      {reportId && hasAiReport && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={reportId} /></div>}
       <CareerReportView
         name={name}
         roleLabel={careerRole}
@@ -1190,11 +1210,13 @@ export default function BlueprintReport({ chart }: Props) {
         paymentPayingLabel={paymentLabels.paying}
         paymentButtonColor={paymentLabels.buttonColor}
       />
+      </>
     );
   }
 
   return (
     <div className="min-h-screen" style={{ background: "#0D1B2A" }}>
+      {reportId && hasAiReport && <div className="no-print fixed right-4 top-4 z-[130]"><ShareReportButton reportId={reportId} /></div>}
       <style>{`@media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
 
       {/* Cover */}
