@@ -551,14 +551,16 @@ function OrdersTab() {
                     title={order.payment_status !== "paid" ? "Payment is required before generating a report" : /queued|generating/i.test(order.generation_status || "") ? "Report generation is already in progress" : "Retry report"}
                     onClick={() => retry.mutate(order.report_id)}
                     disabled={retry.isPending || order.payment_status !== "paid" || /queued|generating/i.test(order.generation_status || "")}
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-[#E8E4DC] disabled:cursor-not-allowed disabled:opacity-35"
-                  ><RotateCcw size={15} /></button>
+                    aria-label="Retry report"
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-[#B98923] bg-[#FFF7DE] text-[#805A00] transition-colors hover:bg-[#FBE9AE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B98923] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-[#D6D1C8] disabled:bg-[#F3F1EC] disabled:text-[#8A847A]"
+                  ><RotateCcw size={16} strokeWidth={2.4} /></button>
                   <button
                     title={order.payment_status === "paid" && order.generation_status === "COMPLETE" ? "Resend email" : "A completed paid report is required before sending email"}
                     onClick={() => resend.mutate(order.report_id)}
                     disabled={resend.isPending || order.payment_status !== "paid" || order.generation_status !== "COMPLETE"}
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-[#E8E4DC] disabled:cursor-not-allowed disabled:opacity-35"
-                  ><Mail size={15} /></button>
+                    aria-label="Resend email"
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] transition-colors hover:bg-[#DBEAFE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-[#D6D1C8] disabled:bg-[#F3F1EC] disabled:text-[#8A847A]"
+                  ><Mail size={16} strokeWidth={2.4} /></button>
                 </div></td>
               </tr>
             ))}
@@ -585,8 +587,8 @@ function OrdersTab() {
             <div className="mt-3 flex items-center justify-between gap-3">
               <p className="text-xs text-[#6B6560]">{new Date(order.created_at).toLocaleString()}</p>
               <div className="flex gap-2">
-                <button aria-label="Retry report" title="Retry report" onClick={() => retry.mutate(order.report_id)} disabled={retry.isPending || order.payment_status !== "paid" || /queued|generating/i.test(order.generation_status || "")} className="flex h-10 w-10 items-center justify-center rounded-md border border-[#E8E4DC] disabled:opacity-35"><RotateCcw size={16} /></button>
-                <button aria-label="Resend email" title="Resend email" onClick={() => resend.mutate(order.report_id)} disabled={resend.isPending || order.payment_status !== "paid" || order.generation_status !== "COMPLETE"} className="flex h-10 w-10 items-center justify-center rounded-md border border-[#E8E4DC] disabled:opacity-35"><Mail size={16} /></button>
+                <button aria-label="Retry report" title="Retry report" onClick={() => retry.mutate(order.report_id)} disabled={retry.isPending || order.payment_status !== "paid" || /queued|generating/i.test(order.generation_status || "")} className="flex h-10 w-10 items-center justify-center rounded-md border border-[#B98923] bg-[#FFF7DE] text-[#805A00] transition-colors hover:bg-[#FBE9AE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B98923] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-[#D6D1C8] disabled:bg-[#F3F1EC] disabled:text-[#8A847A]"><RotateCcw size={17} strokeWidth={2.4} /></button>
+                <button aria-label="Resend email" title="Resend email" onClick={() => resend.mutate(order.report_id)} disabled={resend.isPending || order.payment_status !== "paid" || order.generation_status !== "COMPLETE"} className="flex h-10 w-10 items-center justify-center rounded-md border border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] transition-colors hover:bg-[#DBEAFE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-[#D6D1C8] disabled:bg-[#F3F1EC] disabled:text-[#8A847A]"><Mail size={17} strokeWidth={2.4} /></button>
               </div>
             </div>
           </article>
