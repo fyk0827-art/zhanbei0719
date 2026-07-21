@@ -1,6 +1,7 @@
 package com.lifeblueprint.web;
 
 import com.lifeblueprint.service.PaypalService;
+import com.lifeblueprint.service.ReportDeliveryService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,13 +13,22 @@ import java.util.Map;
 @RequestMapping("/api/paypal")
 public class PaypalController {
     private final PaypalService paypal;
-    public PaypalController(PaypalService paypal) { this.paypal = paypal; }
+    private final ReportDeliveryService reportDelivery;
+    public PaypalController(PaypalService paypal, ReportDeliveryService reportDelivery) {
+        this.paypal = paypal;
+        this.reportDelivery = reportDelivery;
+    }
 
     @PostMapping("/orders")
     public Map<String, Object> create(@RequestBody Map<String, String> body) throws Exception {
         String reportId = body.get("reportId");
         if (reportId == null || reportId.isBlank()) throw new IllegalArgumentException("reportId is required");
-        return paypal.createOrder(reportId.trim());
+        String returnToken = body.get("returnToken");
+        if (returnToken != null && !returnToken.isBlank()
+                && !reportDelivery.accessTokenMatchesReport(returnToken, reportId.trim())) {
+            throw new IllegalArgumentException("The report return link is invalid");
+        }
+        return paypal.createOrder(reportId.trim(), returnToken);
     }
 
     @PostMapping("/orders/{paypalOrderId}/capture")

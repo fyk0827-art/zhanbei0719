@@ -19,6 +19,7 @@ import type {
   AdminSettings,
   UpdateSettingsRequest,
   ContactResponse,
+  VerificationCodeResponse,
   AdminOrder,
   DeliverySettings,
   UpdateDeliverySettings,
@@ -104,6 +105,8 @@ export const settingsApi = {
 
 export const contactApi = {
   save: (email: string) => post<ContactResponse>("/contacts", { email, language: "en" }),
+  sendCode: (email: string) => post<VerificationCodeResponse>("/contacts/send-code", { email, language: "en" }),
+  verifyCode: (email: string, code: string) => post<ContactResponse>("/contacts/verify-code", { email, code, language: "en" }),
 };
 
 export const adminSettingsApi = {

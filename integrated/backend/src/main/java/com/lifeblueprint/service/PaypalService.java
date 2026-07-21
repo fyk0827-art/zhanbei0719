@@ -40,7 +40,7 @@ public class PaypalService {
         this.json = json;
     }
 
-    public Map<String, Object> createOrder(String reportId) throws Exception {
+    public Map<String, Object> createOrder(String reportId, String returnToken) throws Exception {
         Map<String, Object> report = delivery.report(reportId).orElseThrow(() -> new IllegalArgumentException("Report input not found"));
         String email = report.get("email") == null ? null : String.valueOf(report.get("email"));
         if (email == null || email.isBlank()) throw new IllegalArgumentException("A report delivery email is required");
@@ -51,10 +51,19 @@ public class PaypalService {
             System.currentTimeMillis(), null);
         payments.upsertOrder(order);
 
-        String returnUrl = paymentProperties.getFrontendUrl().replaceAll("/+$", "") + "/generator/final-report?paypal=return&reportId=" +
-            URLEncoder.encode(reportId, StandardCharsets.UTF_8);
-        String cancelUrl = paymentProperties.getFrontendUrl().replaceAll("/+$", "") + "/generator/final-report?paypal=cancel&reportId=" +
-            URLEncoder.encode(reportId, StandardCharsets.UTF_8);
+        String frontend = paymentProperties.getFrontendUrl().replaceAll("/+$", "");
+        String returnUrl;
+        String cancelUrl;
+        if (returnToken != null && !returnToken.isBlank()) {
+            String encodedToken = URLEncoder.encode(returnToken, StandardCharsets.UTF_8);
+            returnUrl = frontend + "/report-access?accessToken=" + encodedToken + "&paypal=return";
+            cancelUrl = frontend + "/report-access?accessToken=" + encodedToken + "&paypal=cancel";
+        } else {
+            returnUrl = frontend + "/generator/final-report?paypal=return&reportId=" +
+                URLEncoder.encode(reportId, StandardCharsets.UTF_8);
+            cancelUrl = frontend + "/generator/final-report?paypal=cancel&reportId=" +
+                URLEncoder.encode(reportId, StandardCharsets.UTF_8);
+        }
         Map<String, Object> payload = Map.of(
             "intent", "CAPTURE",
             "purchase_units", new Object[]{Map.of(

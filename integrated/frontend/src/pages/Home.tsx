@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -8,11 +8,26 @@ import PrismLandingV3 from "@/components/prism/PrismLandingV3";
 import PrismBackground from "@/components/prism/PrismBackground";
 import PrismBrandSymbol from "@/components/prism/PrismBrandSymbol";
 import "@/styles/prism.css";
+import { loadBirthData } from "@/generator/services/reportStore";
+
+function ageFromBirthDate(year: number, month: number, day: number): number {
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1;
+  return age;
+}
 
 export default function Home() {
   const { t } = useTranslation();
-  const [showLanding, setShowLanding] = useState(true);
-  const [showQuiz, setShowQuiz] = useState(false);
+  const quizRequested = new URLSearchParams(window.location.search).get("quiz") === "1";
+  const birthData = loadBirthData();
+  const derivedAge = birthData ? ageFromBirthDate(birthData.year, birthData.month, birthData.day) : null;
+  const showLanding = !quizRequested;
+  const showQuiz = quizRequested;
+
+  useEffect(() => {
+    if (quizRequested && !birthData) window.location.replace("/generator");
+  }, [quizRequested, birthData]);
 
   const { data: ageGroups, isLoading: ageGroupsLoading } = useQuery({
     queryKey: ["ageGroups"],
@@ -27,21 +42,19 @@ export default function Home() {
   const questionCount = publicSettings?.quizQuestionCount ?? 20;
 
   const handleStartTest = () => {
-    setShowLanding(false);
-    setShowQuiz(true);
+    window.location.href = "/generator";
   };
 
   const handleQuizClose = () => {
-    setShowQuiz(false);
-    sessionStorage.setItem("qaTestTaken", "true");
+    window.location.href = "/generator";
   };
 
   if (showLanding) {
     return <PrismLandingV3 onStart={handleStartTest} questionCount={questionCount} />;
   }
 
-  if (showQuiz && ageGroups) {
-    return <QuizFlow ageGroups={ageGroups} onClose={handleQuizClose} />;
+  if (showQuiz && ageGroups && derivedAge != null) {
+    return <QuizFlow ageGroups={ageGroups} onClose={handleQuizClose} initialAge={derivedAge} />;
   }
 
   return (
@@ -90,8 +103,7 @@ export default function Home() {
             <button
               className="prism-btn-gold prism-fade-in prism-fade-d4"
               onClick={() => {
-                setShowLanding(false);
-                setShowQuiz(true);
+                handleStartTest();
               }}
               disabled={!ageGroups?.length}
             >

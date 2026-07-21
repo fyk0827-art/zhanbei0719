@@ -125,6 +125,13 @@ export interface ContactResponse {
   contactId: string;
   email: string;
   language: string;
+  verified?: boolean;
+}
+
+export interface VerificationCodeResponse {
+  email: string;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
 }
 
 export interface AdminSettings {

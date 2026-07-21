@@ -19,6 +19,7 @@ export interface FetchReportResponse {
   reportId: string;
   hasReport: boolean;
   unlocked: boolean;
+  paid?: boolean;
   displayName?: string;
   reportText?: string;
   chartJson?: NatalChart;
@@ -49,7 +50,8 @@ export function loadReportStatusToken(reportId: string): string {
 async function parseJson<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((data as { error?: string }).error || `请求失败 ${res.status}`);
+    const problem = data as { error?: string; message?: string };
+    throw new Error(problem.message || problem.error || `Request failed (${res.status})`);
   }
   return data as T;
 }
@@ -64,7 +66,7 @@ export async function saveReportToServer(params: {
   reportType?: string;
 }): Promise<{ statusToken: string }> {
   const contactId = localStorage.getItem("life_blueprint_contact_id") || "";
-  if (!contactId) throw new Error("Please return to the age step and enter your email first.");
+  if (!contactId) throw new Error("Please return to your personal details and verify your email first.");
   const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(params.reportId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

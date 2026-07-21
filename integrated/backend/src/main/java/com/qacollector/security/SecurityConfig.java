@@ -67,7 +67,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/settings/public").permitAll()
                 // 生成器 API（报告、订单、支付回调）
                 .requestMatchers("/api/health").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/contacts").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/contacts/**").permitAll()
                 .requestMatchers("/api/paypal/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/report-access/**").permitAll()
                 .requestMatchers("/api/reports/**").permitAll()

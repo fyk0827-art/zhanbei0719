@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { X, Check, ChevronRight, Loader2 } from "lucide-react";
-import { contactApi, questionApi, settingsApi } from "@/services/api";
+import { questionApi, settingsApi } from "@/services/api";
 import type { QuestionDTO } from "@/types/api";
 import {
   FEELING_SCALE_UI,
@@ -13,7 +13,6 @@ import {
 } from "@/data/feelingScaleQuestions";
 import { saveQuizReport } from "@/lib/quizReport";
 import PrismBackground from "@/components/prism/PrismBackground";
-import PrismBrandSymbol from "@/components/prism/PrismBrandSymbol";
 import "@/styles/prism.css";
 
 interface AgeGroup {
@@ -27,9 +26,10 @@ interface AgeGroup {
 interface QuizFlowProps {
   ageGroups: AgeGroup[];
   onClose: () => void;
+  initialAge: number;
 }
 
-type QuizStep = "age" | "answering" | "result";
+type QuizStep = "answering" | "result";
 
 interface ScaleQuestion {
   id: number;
@@ -52,15 +52,11 @@ function toScaleQuestion(q: QuestionDTO): ScaleQuestion | null {
   };
 }
 
-export default function QuizFlow({ ageGroups, onClose }: QuizFlowProps) {
+export default function QuizFlow({ ageGroups, onClose, initialAge }: QuizFlowProps) {
   const { t, i18n } = useTranslation();
-  const [step, setStep] = useState<QuizStep>("age");
-  const [userAge, setUserAge] = useState("");
-  const [email, setEmail] = useState("");
-  const [ageError, setAgeError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [savingContact, setSavingContact] = useState(false);
-  const [matchedGroup, setMatchedGroup] = useState<AgeGroup | null>(null);
+  const [step, setStep] = useState<QuizStep>("answering");
+  const userAge = String(initialAge);
+  const matchedGroup = ageGroups.find((g) => initialAge >= g.minAge && initialAge <= g.maxAge) || null;
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [slideKey, setSlideKey] = useState(0);
@@ -94,57 +90,9 @@ export default function QuizFlow({ ageGroups, onClose }: QuizFlowProps) {
 
   const TOTAL = questions.length;
 
-  useEffect(() => {
-    setAnswers((prev) => {
-      if (TOTAL === 0) return [];
-      if (prev.length === TOTAL) return prev;
-      return Array(TOTAL).fill(null);
-    });
-  }, [TOTAL]);
-
   const submitAnswerMutation = useMutation({
     mutationFn: questionApi.submitAnswer,
   });
-
-  const determineAgeGroup = (age: number): AgeGroup | null => {
-    return ageGroups.find((g) => age >= g.minAge && age <= g.maxAge) || null;
-  };
-
-  const handleAgeSubmit = async () => {
-    const age = parseInt(userAge);
-    if (isNaN(age) || age < 0 || age > 120) {
-      setAgeError(t("invalidAge"));
-      return;
-    }
-    setAgeError("");
-    const group = determineAgeGroup(age);
-    if (!group) {
-      setAgeError(t("noAgeGroupMatch"));
-      return;
-    }
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setEmailError("Please enter a valid email address");
-      return;
-    }
-    setSavingContact(true);
-    try {
-      const contact = await contactApi.save(normalizedEmail);
-      localStorage.setItem("life_blueprint_contact_id", contact.contactId);
-      localStorage.setItem("life_blueprint_email", contact.email);
-    } catch (error) {
-      setEmailError(error instanceof Error ? error.message : "We could not save your email. Please try again.");
-      setSavingContact(false);
-      return;
-    }
-    setSavingContact(false);
-    setEmailError("");
-    setMatchedGroup(group);
-    setStep("answering");
-    setCurrentQIndex(0);
-    setAnswers([]);
-    setSlideKey((k) => k + 1);
-  };
 
   const choose = (value: number) => {
     if (choosing || !questions[currentQIndex]) return;
@@ -215,7 +163,7 @@ export default function QuizFlow({ ageGroups, onClose }: QuizFlowProps) {
 
   const handleContinueToGenerator = () => {
     sessionStorage.setItem("qaTestTaken", "true");
-    window.location.href = "/generator";
+    window.location.href = "/generator?generate=1";
   };
 
   const currentQ = questions[currentQIndex];
@@ -229,6 +177,21 @@ export default function QuizFlow({ ageGroups, onClose }: QuizFlowProps) {
     TOTAL,
     matchedGroup?.name ?? "",
   );
+
+  if (!matchedGroup) {
+    return (
+      <div className="prism-root fixed inset-0 z-[100] overflow-y-auto">
+        <PrismBackground />
+        <div className="prism-page min-h-screen px-6 text-center">
+          <div className="max-w-[420px]">
+            <h2 className="prism-font-serif mb-3 text-xl font-bold" style={{ color: "var(--prism-cream)" }}>We couldn't match an age group</h2>
+            <p className="mb-6 text-sm leading-relaxed" style={{ color: "rgba(250,246,240,0.55)" }}>Please check your date of birth and try again.</p>
+            <button type="button" className="prism-btn-gold" onClick={onClose}>Back to personal details</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="prism-root fixed inset-0 z-[100] overflow-y-auto">
@@ -256,64 +219,6 @@ export default function QuizFlow({ ageGroups, onClose }: QuizFlowProps) {
         </button>
       )}
 
-      {step === "age" && (
-        <div className="prism-page min-h-screen">
-          <div className="w-full max-w-[400px] text-center">
-            <div className="mb-6">
-              <PrismBrandSymbol size={56} />
-            </div>
-            <h2 className="prism-font-serif text-xl font-bold mb-2" style={{ color: "var(--prism-cream)" }}>
-              {t("howOldAreYou")}
-            </h2>
-            <p className="text-sm mb-8" style={{ color: "rgba(250,246,240,0.68)" }}>
-              {t("ageHelpText")}
-            </p>
-            <input
-              type="text"
-              value={userAge}
-              onChange={(e) => {
-                setUserAge(e.target.value.replace(/\D/g, "").slice(0, 3));
-                setAgeError("");
-              }}
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder={t("enterAge")}
-              autoFocus
-              autoComplete="off"
-              className="prism-input text-center text-2xl prism-font-serif mb-4"
-            />
-            <div className="mb-4 text-left">
-              <label className="mb-2 block text-sm" style={{ color: "rgba(250,246,240,0.7)" }} htmlFor="report-email">
-                Email address
-              </label>
-              <input
-                id="report-email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
-                onKeyDown={(e) => e.key === "Enter" && void handleAgeSubmit()}
-                placeholder="you@example.com"
-                className="prism-input"
-              />
-              <p className="mt-2 text-xs leading-relaxed" style={{ color: "rgba(250,246,240,0.66)" }}>
-                We'll save your email and send your complete paid report when it is ready. No verification code required.
-              </p>
-            </div>
-            {ageError && (
-              <p className="mb-4 text-sm" style={{ color: "var(--prism-danger)" }}>
-                {ageError}
-              </p>
-            )}
-            {emailError && <p className="mb-4 text-sm" style={{ color: "var(--prism-danger)" }}>{emailError}</p>}
-            <button className="prism-btn-gold w-full" onClick={() => void handleAgeSubmit()} disabled={!userAge.trim() || !email.trim() || savingContact}>
-              {savingContact ? <Loader2 size={18} className="mx-auto animate-spin" /> : t("continue")}
-            </button>
-          </div>
-        </div>
-      )}
-
       {step === "answering" && matchedGroup && (
         <div className="prism-page min-h-screen !justify-start pt-14 pb-10">
           <div className="w-full max-w-[720px] flex flex-col relative">
@@ -327,7 +232,7 @@ export default function QuizFlow({ ageGroups, onClose }: QuizFlowProps) {
                 <p className="mb-6 text-sm" style={{ color: "rgba(250,246,240,0.35)" }}>
                   Add questions with A/B poles in the admin dashboard, then try again.
                 </p>
-                <button className="prism-btn-gold" onClick={() => setStep("age")}>
+                <button className="prism-btn-gold" onClick={onClose}>
                   {t("goBack")}
                 </button>
               </div>

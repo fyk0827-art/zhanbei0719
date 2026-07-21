@@ -23,14 +23,15 @@ public class ReportDeliveryService {
     }
 
     public String savePreview(String reportId, SaveReportRequest request) {
-        if (request.contactId() == null || request.contactId().isBlank() || !repository.contactExists(request.contactId())) {
-            throw new IllegalArgumentException("A valid contactId is required");
+        if (request.contactId() == null || request.contactId().isBlank() || !repository.contactVerified(request.contactId())) {
+            throw new IllegalArgumentException("A verified contactId is required");
         }
         try {
             String statusToken = tokens.create();
             String chartJson = request.chartJson() == null ? null : json.writeValueAsString(request.chartJson());
             repository.savePreview(reportId, request.reportText(), chartJson, request.displayName(),
                 request.contactId(), normalizeLanguage(request.language()), tokens.hash(statusToken));
+            repository.enqueuePreviewEmailOnce(reportId);
             return statusToken;
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException iae) throw iae;
@@ -67,15 +68,31 @@ public class ReportDeliveryService {
     public Optional<Map<String, Object>> access(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) return Optional.empty();
         return repository.reportByAccessToken(tokens.hash(rawToken)).map(row -> {
+            String scope = String.valueOf(row.getOrDefault("access_scope", "FULL"));
+            boolean paid = row.get("paid") instanceof Number number && number.intValue() == 1;
+            boolean full = "COMPLETE".equals(String.valueOf(row.get("generation_status")))
+                && ("FULL".equals(scope) || paid);
+            if ("FULL".equals(scope) && !full) return null;
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("reportId", row.get("report_id"));
             body.put("displayName", row.get("display_name"));
-            body.put("reportText", row.get("full_report_text"));
+            body.put("reportText", full ? row.get("full_report_text") : row.get("report_text"));
             body.put("chartJson", parseJson(row.get("chart_json")));
             body.put("language", row.get("language"));
             body.put("completedAt", row.get("generation_completed_at"));
+            body.put("accessScope", scope);
+            body.put("unlocked", full);
+            body.put("paid", paid);
+            body.put("generationStatus", row.get("generation_status"));
             return body;
-        });
+        }).filter(java.util.Objects::nonNull);
+    }
+
+    public boolean accessTokenMatchesReport(String rawToken, String reportId) {
+        if (rawToken == null || rawToken.isBlank() || reportId == null || reportId.isBlank()) return false;
+        return repository.reportByAccessToken(tokens.hash(rawToken))
+            .map(row -> reportId.equals(String.valueOf(row.get("report_id"))))
+            .orElse(false);
     }
 
     private JsonNode parseJson(Object value) {

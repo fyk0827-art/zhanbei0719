@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
-import { CircleHelp, Clock3 } from "lucide-react";
+import { CircleHelp, Clock3, Loader2, Mail, ShieldCheck } from "lucide-react";
 import PrismBackground from "@/components/prism/PrismBackground";
 import PrismBrandSymbol from "@/components/prism/PrismBrandSymbol";
 import type { BirthData } from "../services/astrologyEngine";
@@ -12,6 +12,8 @@ import BirthDatePicker from "../components/BirthDatePicker";
 import LocationPicker from "../components/LocationPicker";
 import PlanetCharactersSection from "@/components/PlanetCharactersSection";
 import "@/styles/prism.css";
+import { contactApi } from "@/services/api";
+import { loadBirthData, saveBirthData } from "../services/reportStore";
 
 interface Props {
   onGenerate: (data: BirthData) => void;
@@ -19,7 +21,12 @@ interface Props {
   charCount?: number;
 }
 
-export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props) {
+function apiErrorMessage(error: unknown, fallback: string): string {
+  const payload = error as { response?: { data?: { message?: string } }; message?: string };
+  return payload.response?.data?.message || payload.message || fallback;
+}
+
+export default function HomePage({ onGenerate, isLoading }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -36,6 +43,36 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
   const [customTz, setCustomTz] = useState("8");
   const [useCustomCoords, setUseCustomCoords] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+  const [email, setEmail] = useState(() => localStorage.getItem("life_blueprint_email") || "");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(() => {
+    const savedEmail = localStorage.getItem("life_blueprint_email") || "";
+    return Boolean(savedEmail && localStorage.getItem("life_blueprint_email_verified") === savedEmail.toLowerCase()
+      && localStorage.getItem("life_blueprint_contact_id"));
+  });
+  const [verifiedEmail, setVerifiedEmail] = useState(() => localStorage.getItem("life_blueprint_email_verified") || "");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [resendSeconds, setResendSeconds] = useState(0);
+  const autoStarted = useRef(false);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setInterval(() => setResendSeconds((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
+
+  useEffect(() => {
+    if (searchParams.get("generate") !== "1" || autoStarted.current) return;
+    const savedBirth = loadBirthData();
+    if (!savedBirth) {
+      navigate("/generator", { replace: true });
+      return;
+    }
+    autoStarted.current = true;
+    onGenerate(savedBirth);
+  }, [searchParams, navigate, onGenerate]);
 
   useEffect(() => {
     const orderId = searchParams.get("orderId");
@@ -59,11 +96,54 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
     if (loc) setFieldErrors((p) => ({ ...p, city: false }));
   }, []);
 
+  const handleSendCode = useCallback(async () => {
+    const normalized = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+    setEmailBusy(true);
+    setEmailError("");
+    try {
+      const result = await contactApi.sendCode(normalized);
+      setCodeSent(true);
+      setVerificationCode("");
+      setResendSeconds(result.resendAfterSeconds);
+    } catch (error) {
+      setEmailError(apiErrorMessage(error, "We couldn't send the verification code."));
+    } finally {
+      setEmailBusy(false);
+    }
+  }, [email]);
+
+  const handleVerifyCode = useCallback(async () => {
+    const normalized = email.trim().toLowerCase();
+    if (!/^\d{6}$/.test(verificationCode)) {
+      setEmailError("Enter the 6-digit verification code.");
+      return;
+    }
+    setEmailBusy(true);
+    setEmailError("");
+    try {
+      const contact = await contactApi.verifyCode(normalized, verificationCode);
+      localStorage.setItem("life_blueprint_contact_id", contact.contactId);
+      localStorage.setItem("life_blueprint_email", contact.email);
+      localStorage.setItem("life_blueprint_email_verified", normalized);
+      setVerifiedEmail(normalized);
+      setEmailVerified(true);
+    } catch (error) {
+      setEmailError(apiErrorMessage(error, "The verification code is invalid or expired."));
+    } finally {
+      setEmailBusy(false);
+    }
+  }, [email, verificationCode]);
+
   const handleSubmit = useCallback(() => {
     const errors: Record<string, boolean> = {};
     if (!birthDate) errors.birthDate = true;
     if (!useCustomCoords && !selectedLocation) errors.city = true;
     if (useCustomCoords && (!customLat || !customLng)) errors.coords = true;
+    if (!emailVerified || email.trim().toLowerCase() !== verifiedEmail) errors.email = true;
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -84,10 +164,12 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
     const effectiveBirthTime = birthTimeUnknown ? "12:00" : birthTime;
     const [hour, minute] = effectiveBirthTime.split(":").map(Number);
     setGlobalReportType("full");
-    onGenerate({ year, month, day, hour, minute, latitude: lat, longitude: lng, timezone: tz, gender, name: name || undefined });
-  }, [birthDate, birthTime, birthTimeUnknown, selectedLocation, gender, name, onGenerate, useCustomCoords, customLat, customLng, customTz]);
+    saveBirthData({ year, month, day, hour, minute, latitude: lat, longitude: lng, timezone: tz, gender, name: name || undefined });
+    sessionStorage.setItem("life_blueprint_flow_id", crypto.randomUUID());
+    window.location.href = "/?quiz=1";
+  }, [birthDate, birthTime, birthTimeUnknown, selectedLocation, gender, name, useCustomCoords, customLat, customLng, customTz, emailVerified, email, verifiedEmail]);
 
-  if (isLoading) {
+  if (isLoading || searchParams.get("generate") === "1") {
     return (
       <div className="prism-root min-h-screen relative overflow-hidden">
         <PrismBackground />
@@ -116,10 +198,10 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
             {t("lifeScriptBrand").split("").join(" ")}
           </div>
           <h1 className="prism-font-serif text-[22px] font-bold leading-relaxed mb-2" style={{ color: "var(--prism-cream)" }}>
-            {t("genSoulRevealed")}{" "}<span style={{ color: "var(--prism-gold)" }}>{t("genSoulOutline")}</span>
+            {t("genProfileTitle")}{" "}<span style={{ color: "var(--prism-gold)" }}>{t("genProfileHighlight")}</span>
           </h1>
           <p className="text-[13px] leading-loose" style={{ color: "rgba(250,246,240,0.4)" }}>
-            {t("genBirthMoment")}<br />{t("genBirthMoment2")}
+            {t("genProfileSubtitle")}<br />{t("genProfileSubtitle2")}
           </p>
         </div>
 
@@ -279,12 +361,96 @@ export default function HomePage({ onGenerate, isLoading, charCount = 0 }: Props
             </button>
           </div>
 
+          <div className="mt-5 text-left">
+            <div className="mb-2 flex items-center gap-2">
+              <Mail size={16} aria-hidden="true" style={{ color: "var(--prism-gold)" }} />
+              <span className="prism-font-serif text-[13px] font-semibold" style={{ color: "rgba(250,246,240,0.7)" }}>
+                Email address <span style={{ color: "var(--prism-gold)" }}>*</span>
+              </span>
+            </div>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setEmail(next);
+                  setEmailError("");
+                  if (next.trim().toLowerCase() !== verifiedEmail) setEmailVerified(false);
+                  setFieldErrors((current) => ({ ...current, email: false }));
+                }}
+                placeholder="you@example.com"
+                className={`prism-input ${fieldErrors.email ? "error" : ""}`}
+                disabled={emailVerified}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (emailVerified) {
+                    setEmailVerified(false);
+                    setCodeSent(false);
+                    setVerificationCode("");
+                    return;
+                  }
+                  void handleSendCode();
+                }}
+                disabled={emailBusy || (!emailVerified && resendSeconds > 0)}
+                className="min-h-12 rounded-[10px] border px-3 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+                style={{ borderColor: "rgba(232,185,81,0.28)", color: "var(--prism-gold)", background: "rgba(232,185,81,0.06)" }}
+              >
+                {emailVerified ? "Change" : emailBusy && !codeSent ? <Loader2 size={16} className="mx-auto animate-spin" />
+                  : resendSeconds > 0 ? `${resendSeconds}s` : codeSent ? "Resend" : "Send code"}
+              </button>
+            </div>
+
+            {codeSent && !emailVerified && (
+              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={verificationCode}
+                  onChange={(event) => { setVerificationCode(event.target.value.replace(/\D/g, "").slice(0, 6)); setEmailError(""); }}
+                  onKeyDown={(event) => event.key === "Enter" && void handleVerifyCode()}
+                  placeholder="6-digit code"
+                  className="prism-input tracking-[6px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleVerifyCode()}
+                  disabled={emailBusy || verificationCode.length !== 6}
+                  className="min-h-12 rounded-[10px] border px-4 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+                  style={{ borderColor: "rgba(232,185,81,0.4)", color: "#0D1B2A", background: "var(--prism-gold)" }}
+                >
+                  {emailBusy ? <Loader2 size={16} className="mx-auto animate-spin" /> : "Verify"}
+                </button>
+              </div>
+            )}
+
+            {emailVerified ? (
+              <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: "#74c69d" }}>
+                <ShieldCheck size={15} aria-hidden="true" />
+                <span>Email verified. Your reports will be sent here.</span>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: "rgba(250,246,240,0.5)" }}>
+                Verify your email to receive your free preview and complete paid report.
+              </p>
+            )}
+            {emailError && <p className="mt-2 text-xs" style={{ color: "var(--prism-danger)" }}>{emailError}</p>}
+            {fieldErrors.email && !emailError && (
+              <p className="mt-2 text-xs" style={{ color: "var(--prism-danger)" }}>Please verify your email before continuing.</p>
+            )}
+          </div>
+
           <button
             type="button"
             className="prism-btn-gold w-full mt-7"
             onClick={handleSubmit}
           >
-            {t("genConnectChart")}
+            Continue to questions
           </button>
         </div>
 

@@ -49,7 +49,8 @@ export default function App() {
     } else {
       saveReportText(text, reportType);
     }
-    const reportId = await computeReportId(activeChart.birthData, reportType);
+    const flowId = sessionStorage.getItem("life_blueprint_flow_id") || undefined;
+    const reportId = await computeReportId(activeChart.birthData, reportType, flowId);
     saveReportId(reportId, reportType);
     try {
       await saveReportToServer({
@@ -64,7 +65,8 @@ export default function App() {
         await bindPrepaidReport(prepaidOrderId, reportId);
       }
     } catch (e) {
-      console.warn("[report] 同步到服务器失败，请确认 payment API 已启动", e);
+      console.error("[report] Failed to save the preview for email delivery", e);
+      throw new Error("We couldn't save your preview for email delivery. Please try again.");
     }
     return { reportId, reportType };
   }, []);

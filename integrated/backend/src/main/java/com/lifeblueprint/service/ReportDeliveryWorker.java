@@ -38,7 +38,7 @@ public class ReportDeliveryWorker {
             String fullReport = deepSeek.generate(row);
             repository.complete(reportId, fullReport);
             Object email = row.get("email");
-            if (email != null && !String.valueOf(email).isBlank()) repository.enqueueEmail(reportId, String.valueOf(email));
+            if (email != null && !String.valueOf(email).isBlank()) repository.enqueueEmail(reportId, String.valueOf(email), "FULL");
         } catch (Exception e) {
             int attempts = ((Number) row.getOrDefault("generation_attempts", 1)).intValue();
             repository.generationFailed(reportId, e.getMessage(), attempts < 3);
@@ -50,12 +50,16 @@ public class ReportDeliveryWorker {
         long id = ((Number) emailRow.get("id")).longValue();
         if (!repository.claimEmail(id)) return;
         String reportId = String.valueOf(emailRow.get("report_id"));
+        String deliveryType = String.valueOf(emailRow.getOrDefault("delivery_type", "FULL"));
         try {
             Map<String, Object> report = repository.report(reportId).orElseThrow();
             String token = tokens.create();
-            repository.createAccessToken(reportId, tokens.hash(token));
-            String providerId = emailService.sendReport(String.valueOf(emailRow.get("recipient_email")),
-                report.get("display_name") == null ? "" : String.valueOf(report.get("display_name")), token);
+            repository.createAccessToken(reportId, tokens.hash(token), deliveryType);
+            String recipient = String.valueOf(emailRow.get("recipient_email"));
+            String displayName = report.get("display_name") == null ? "" : String.valueOf(report.get("display_name"));
+            String providerId = "PREVIEW".equals(deliveryType)
+                ? emailService.sendPreviewReport(recipient, displayName, token)
+                : emailService.sendReport(recipient, displayName, token);
             repository.emailSent(id, providerId);
         } catch (Exception e) {
             repository.emailFailed(id, e.getMessage());

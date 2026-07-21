@@ -33,6 +33,61 @@ public class DeliveryRepository {
         return count != null && count > 0;
     }
 
+    public boolean contactVerified(String contactId) {
+        Integer count = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM contacts WHERE id = ? AND verified_at IS NOT NULL", Integer.class, contactId);
+        return count != null && count > 0;
+    }
+
+    public Optional<Map<String, Object>> verification(String normalizedEmail) {
+        List<Map<String, Object>> rows = jdbc.queryForList(
+            "SELECT * FROM email_verifications WHERE normalized_email = ? LIMIT 1", normalizedEmail);
+        return rows.stream().findFirst();
+    }
+
+    @Transactional
+    public void saveVerification(String normalizedEmail, String contactId, String codeHash,
+                                 long expiresAt, long resendAvailableAt) {
+        long now = System.currentTimeMillis();
+        jdbc.update("""
+            INSERT INTO email_verifications
+              (normalized_email, contact_id, code_hash, expires_at, resend_available_at, attempts, created_at, verified_at)
+            VALUES (?, ?, ?, ?, ?, 0, ?, NULL)
+            ON DUPLICATE KEY UPDATE contact_id=VALUES(contact_id), code_hash=VALUES(code_hash),
+              expires_at=VALUES(expires_at), resend_available_at=VALUES(resend_available_at),
+              attempts=0, created_at=VALUES(created_at), verified_at=NULL
+            """, normalizedEmail, contactId, codeHash, expiresAt, resendAvailableAt, now);
+    }
+
+    @Transactional
+    public boolean verifyEmailCode(String normalizedEmail, String codeHash, long now) {
+        int updated = jdbc.update("""
+            UPDATE email_verifications SET verified_at=?
+            WHERE normalized_email=? AND code_hash=? AND verified_at IS NULL
+              AND expires_at>=? AND attempts<5
+            """, now, normalizedEmail, codeHash, now);
+        if (updated != 1) {
+            jdbc.update("""
+                UPDATE email_verifications SET attempts=attempts+1
+                WHERE normalized_email=? AND verified_at IS NULL AND expires_at>=?
+                """, normalizedEmail, now);
+            return false;
+        }
+        jdbc.update("""
+            UPDATE contacts c JOIN email_verifications v ON v.contact_id=c.id
+            SET c.verified_at=?, c.last_seen_at=? WHERE v.normalized_email=?
+            """, now, now, normalizedEmail);
+        return true;
+    }
+
+    public Optional<Map<String, Object>> verifiedContact(String normalizedEmail) {
+        List<Map<String, Object>> rows = jdbc.queryForList("""
+            SELECT id, email, language, verified_at FROM contacts
+            WHERE normalized_email=? AND verified_at IS NOT NULL LIMIT 1
+            """, normalizedEmail);
+        return rows.stream().findFirst();
+    }
+
     public void savePreview(String reportId, String preview, String chartJson, String displayName,
                             String contactId, String language, String statusTokenHash) {
         long now = System.currentTimeMillis();
@@ -115,28 +170,48 @@ public class DeliveryRepository {
             """, retry ? "QUEUED" : "FAILED", truncate(error, 4000), System.currentTimeMillis(), reportId);
     }
 
-    public void createAccessToken(String reportId, String tokenHash) {
-        jdbc.update("INSERT INTO report_access_tokens (token_hash, report_id, created_at) VALUES (?, ?, ?)",
-            tokenHash, reportId, System.currentTimeMillis());
+    public void createAccessToken(String reportId, String tokenHash, String scope) {
+        jdbc.update("INSERT INTO report_access_tokens (token_hash, report_id, created_at, access_scope) VALUES (?, ?, ?, ?)",
+            tokenHash, reportId, System.currentTimeMillis(), scope);
     }
 
     public Optional<Map<String, Object>> reportByAccessToken(String tokenHash) {
         try {
             return Optional.ofNullable(jdbc.queryForMap("""
-                SELECT r.report_id, r.display_name, r.full_report_text, r.chart_json, r.language,
-                       r.generation_completed_at
+                SELECT r.report_id, r.display_name, r.report_text, r.full_report_text, r.chart_json, r.language,
+                       r.generation_status, r.generation_completed_at, t.access_scope,
+                       CASE WHEN u.report_id IS NULL THEN 0 ELSE 1 END paid
                 FROM report_access_tokens t JOIN reports r ON r.report_id=t.report_id
-                WHERE t.token_hash=? AND t.revoked_at IS NULL AND r.generation_status='COMPLETE' LIMIT 1
+                LEFT JOIN unlocks u ON u.report_id=r.report_id
+                WHERE t.token_hash=? AND t.revoked_at IS NULL LIMIT 1
                 """, tokenHash));
         } catch (EmptyResultDataAccessException e) { return Optional.empty(); }
     }
 
-    public void enqueueEmail(String reportId, String recipient) {
+    public void enqueueEmail(String reportId, String recipient, String deliveryType) {
         long now = System.currentTimeMillis();
         jdbc.update("""
-            INSERT INTO email_deliveries (report_id, recipient_email, status, attempts, created_at, updated_at)
-            VALUES (?, ?, 'PENDING', 0, ?, ?)
-            """, reportId, recipient, now, now);
+            INSERT INTO email_deliveries
+              (report_id, recipient_email, status, attempts, created_at, updated_at, delivery_type)
+            VALUES (?, ?, 'PENDING', 0, ?, ?, ?)
+            """, reportId, recipient, now, now, deliveryType);
+    }
+
+    @Transactional
+    public boolean enqueuePreviewEmailOnce(String reportId) {
+        long now = System.currentTimeMillis();
+        int updated = jdbc.update("""
+            UPDATE reports SET preview_email_queued_at=?, updated_at=?
+            WHERE report_id=? AND preview_email_queued_at IS NULL
+            """, now, now, reportId);
+        if (updated != 1) return false;
+        List<String> recipients = jdbc.query("""
+            SELECT c.email FROM reports r JOIN contacts c ON c.id=r.contact_id
+            WHERE r.report_id=? AND c.verified_at IS NOT NULL LIMIT 1
+            """, (rs, n) -> rs.getString(1), reportId);
+        if (recipients.isEmpty()) return false;
+        enqueueEmail(reportId, recipients.get(0), "PREVIEW");
+        return true;
     }
 
     public Optional<Map<String, Object>> nextPendingEmail() {
@@ -192,7 +267,7 @@ public class DeliveryRepository {
             ORDER BY o.paid_at DESC, o.created_at DESC LIMIT 1
             """, (rs, n) -> rs.getString(1), reportId);
         if (recipients.isEmpty() || recipients.get(0) == null || recipients.get(0).isBlank()) return false;
-        enqueueEmail(reportId, recipients.get(0));
+        enqueueEmail(reportId, recipients.get(0), "FULL");
         return true;
     }
 

@@ -44,9 +44,9 @@ export interface PaypalOrderResponse {
   environment: "sandbox" | "live";
 }
 
-export async function createPaypalOrder(reportId: string): Promise<PaypalOrderResponse> {
+export async function createPaypalOrder(reportId: string, returnToken?: string): Promise<PaypalOrderResponse> {
   const res = await fetch(`${API_BASE}/api/paypal/orders`, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reportId }),
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reportId, returnToken }),
   });
   return parseJson(res);
 }

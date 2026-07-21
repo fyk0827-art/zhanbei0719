@@ -1,6 +1,7 @@
 package com.lifeblueprint.web;
 
 import com.lifeblueprint.repository.DeliveryRepository;
+import com.lifeblueprint.service.EmailVerificationService;
 import com.qacollector.dto.ApiResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,7 +17,23 @@ import java.util.regex.Pattern;
 public class ContactController {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private final DeliveryRepository repository;
-    public ContactController(DeliveryRepository repository) { this.repository = repository; }
+    private final EmailVerificationService verificationService;
+    public ContactController(DeliveryRepository repository, EmailVerificationService verificationService) {
+        this.repository = repository;
+        this.verificationService = verificationService;
+    }
+
+    @PostMapping("/send-code")
+    public ApiResponse<Map<String, Object>> sendCode(@RequestBody ContactRequest request) {
+        return ApiResponse.ok(verificationService.sendCode(request == null ? null : request.email(),
+            request == null ? null : request.language()));
+    }
+
+    @PostMapping("/verify-code")
+    public ApiResponse<Map<String, Object>> verifyCode(@RequestBody VerifyCodeRequest request) {
+        return ApiResponse.ok(verificationService.verifyCode(request == null ? null : request.email(),
+            request == null ? null : request.code(), request == null ? null : request.language()));
+    }
 
     @PostMapping
     public ApiResponse<Map<String, Object>> save(@RequestBody ContactRequest request) {
@@ -34,4 +51,5 @@ public class ContactController {
     }
 
     public record ContactRequest(String email, String language) {}
+    public record VerifyCodeRequest(String email, String code, String language) {}
 }

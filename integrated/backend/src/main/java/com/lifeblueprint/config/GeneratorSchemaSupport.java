@@ -42,6 +42,7 @@ public final class GeneratorSchemaSupport {
         ensureColumn(jdbc, "reports", "generation_started_at", "ALTER TABLE reports ADD COLUMN generation_started_at BIGINT NULL AFTER generation_error");
         ensureColumn(jdbc, "reports", "generation_completed_at", "ALTER TABLE reports ADD COLUMN generation_completed_at BIGINT NULL AFTER generation_started_at");
         ensureColumn(jdbc, "reports", "status_token_hash", "ALTER TABLE reports ADD COLUMN status_token_hash CHAR(64) NULL AFTER generation_completed_at");
+        ensureColumn(jdbc, "reports", "preview_email_queued_at", "ALTER TABLE reports ADD COLUMN preview_email_queued_at BIGINT NULL AFTER status_token_hash");
         ensureIndex(jdbc, "reports", "idx_reports_generation", "CREATE INDEX idx_reports_generation ON reports (generation_status, updated_at)");
     }
 
@@ -108,7 +109,22 @@ public final class GeneratorSchemaSupport {
               language VARCHAR(10) NOT NULL DEFAULT 'en',
               created_at BIGINT NOT NULL,
               last_seen_at BIGINT NOT NULL,
+              verified_at BIGINT NULL,
               UNIQUE KEY uk_contacts_email (normalized_email)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """);
+        ensureColumn(jdbc, "contacts", "verified_at", "ALTER TABLE contacts ADD COLUMN verified_at BIGINT NULL AFTER last_seen_at");
+        jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS email_verifications (
+              normalized_email VARCHAR(320) NOT NULL PRIMARY KEY,
+              contact_id VARCHAR(36) NOT NULL,
+              code_hash CHAR(64) NOT NULL,
+              expires_at BIGINT NOT NULL,
+              resend_available_at BIGINT NOT NULL,
+              attempts INT NOT NULL DEFAULT 0,
+              created_at BIGINT NOT NULL,
+              verified_at BIGINT NULL,
+              INDEX idx_verification_expiry (expires_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """);
         jdbc.execute("""
@@ -117,9 +133,11 @@ public final class GeneratorSchemaSupport {
               report_id VARCHAR(32) NOT NULL,
               created_at BIGINT NOT NULL,
               revoked_at BIGINT NULL,
+              access_scope VARCHAR(16) NOT NULL DEFAULT 'FULL',
               INDEX idx_access_report (report_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """);
+        ensureColumn(jdbc, "report_access_tokens", "access_scope", "ALTER TABLE report_access_tokens ADD COLUMN access_scope VARCHAR(16) NOT NULL DEFAULT 'FULL' AFTER revoked_at");
         jdbc.execute("""
             CREATE TABLE IF NOT EXISTS email_deliveries (
               id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -132,10 +150,12 @@ public final class GeneratorSchemaSupport {
               created_at BIGINT NOT NULL,
               sent_at BIGINT NULL,
               updated_at BIGINT NOT NULL,
+              delivery_type VARCHAR(16) NOT NULL DEFAULT 'FULL',
               INDEX idx_email_status (status, updated_at),
               INDEX idx_email_report (report_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """);
+        ensureColumn(jdbc, "email_deliveries", "delivery_type", "ALTER TABLE email_deliveries ADD COLUMN delivery_type VARCHAR(16) NOT NULL DEFAULT 'FULL' AFTER updated_at");
     }
 
     private static boolean tableExists(JdbcTemplate jdbc, String table) {
