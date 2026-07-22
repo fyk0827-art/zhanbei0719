@@ -105,6 +105,41 @@ describe("analytics delivery", () => {
     vi.unstubAllGlobals();
   });
 
+  it("hands each configured funnel event to 51.LA exactly once", async () => {
+    const { fetchMock, laTrack } = installBrowserMocks({ la51: true });
+    const analytics = await import("./analytics");
+
+    await Promise.all([
+      analytics.trackEmailVerified("contact-all"),
+      analytics.trackPersonalDetailsCompleted("flow-all"),
+      analytics.trackQuizCompleted("flow-all", 20),
+      analytics.trackPreviewReportViewed("preview-all", "preview"),
+      analytics.trackCheckoutStarted("order-all"),
+      analytics.trackPurchaseCompleted("order-all", "capture-all"),
+      analytics.trackFullReportViewed("report-all"),
+      analytics.trackShareLinkCreated("share-all"),
+      analytics.trackReportShared("share-all", "clipboard"),
+      analytics.trackSharedReportViewed("share-all"),
+      analytics.trackSharedReportCtaClicked("share-all"),
+    ]);
+    await vi.waitFor(() => expect(laTrack).toHaveBeenCalledTimes(11));
+    await vi.waitFor(() => expect(callsFor(fetchMock, "/api/analytics/events")).toHaveLength(9));
+
+    expect(laTrack.mock.calls.map(([name]) => name).sort()).toEqual([
+      "CheckoutStarted",
+      "EmailVerified",
+      "FullReportViewed",
+      "PersonalDetailsCompleted",
+      "PreviewReportViewed",
+      "PurchaseCompleted",
+      "QuizCompleted",
+      "ReportShared",
+      "ShareLinkCreated",
+      "SharedReportCtaClicked",
+      "SharedReportViewed",
+    ].sort());
+  });
+
   it("sends a no-storage event once to 51.LA and CAPI", async () => {
     const { fetchMock, laTrack } = installBrowserMocks({ la51: true });
     const { trackReportShared } = await import("./analytics");
