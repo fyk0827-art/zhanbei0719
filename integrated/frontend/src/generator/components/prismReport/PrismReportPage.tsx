@@ -129,13 +129,15 @@ export interface PrismReportPageProps {
   paywallSlot?: ReactNode;
 }
 
+type PrismSectionContent = NonNullable<PrismReportContent["sections"]>[string];
+
 function SectionBody({
   id,
   content,
   pre,
 }: {
   id: string;
-  content?: PrismReportContent["sections"] extends Record<string, infer S> ? S : never;
+  content?: PrismSectionContent;
   pre: PrismPrecomputed;
 }) {
   const title = content?.title || SECTION_TITLES_EN[id] || id;

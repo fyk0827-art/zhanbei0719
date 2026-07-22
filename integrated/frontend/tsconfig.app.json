@@ -43,5 +43,10 @@
     "src",
     "db",
     "contracts"
+  ],
+  "exclude": [
+    "src/components/AuthLayout.tsx",
+    "src/hooks/useAuth.ts",
+    "src/providers/trpc.tsx"
   ]
 }

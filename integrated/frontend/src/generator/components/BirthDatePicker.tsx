@@ -29,7 +29,6 @@ function daysInMonth(year: number, month: number) {
 }
 
 function parseValue(value: string) {
-  const now = new Date();
   if (!value) {
     return { year: 1990, month: 1, day: 1 };
   }

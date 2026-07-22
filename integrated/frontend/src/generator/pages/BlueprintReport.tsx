@@ -8,7 +8,7 @@ import {
 import type { NatalChart } from "../services/astrologyEngine";
 import { getGlobalReportText, setGlobalReportText, getGlobalReportType, getGlobalChart } from "../App";
 import { getReportTypeMeta, parseReportTypeId } from "../types/reportTypes";
-import { loadReportText, saveReportText, savePreviewReportText, loadReportId, saveReportId, loadBirthData, loadPreviewReportText, loadInitialReportText, markAiReportDone, isAiReportDone } from "../services/reportStore";
+import { saveReportText, savePreviewReportText, loadReportId, saveReportId, loadBirthData, loadPreviewReportText, loadInitialReportText, markAiReportDone, isAiReportDone } from "../services/reportStore";
 import { isPreviewReport500, generateBirthReport500, previewMatchesLocale } from "../services/birthReport500";
 import BirthReport500View from "../components/BirthReport500View";
 import PrismReportPage from "../components/prismReport/PrismReportPage";
@@ -33,6 +33,7 @@ import * as echarts from "echarts";
 import { planetLabel, signLabel, resolveReportLocale } from "../services/birthReport500Locale";
 import {
   getPlanetAvatarSrc,
+  normalizePlanetKey,
   parsePlanetFromCoverText,
   resolvePlanetPersonRole,
   type PlanetKey,
@@ -999,7 +1000,9 @@ export default function BlueprintReport({ chart }: Props) {
     mainTitle = resolvePlanetPersonRole(dp, locale);
   }
 
-  const identityPlanet: PlanetKey = parsePlanetFromCoverText(coverPart?.content || mainTitle, locale) ?? dp;
+  const identityPlanet: PlanetKey = parsePlanetFromCoverText(coverPart?.content || mainTitle, locale)
+    ?? normalizePlanetKey(dp)
+    ?? "太阳";
   const avatarSrc = getPlanetAvatarSrc(identityPlanet, activeChart.birthData);
 
   let whoExplanation = "";

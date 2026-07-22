@@ -147,7 +147,6 @@ function ReportBody({ text }: { text: string }) {
 export default function BirthReport500View({
   chart,
   reportText,
-  reportType,
   reportMeta,
   isUnlocked,
   paying,

@@ -14,9 +14,6 @@ interface ChatRequest {
 
 const BASE_URL = "https://ark.cn-beijing.volces.com/api/v3";
 
-// Never ship provider credentials in the browser bundle.
-const HARDCODED_API_KEY = "";
-
 export async function* streamChat(
   apiKey: string,
   request: ChatRequest
@@ -134,9 +131,6 @@ export function getSettings(): AppSettings {
     }
   } catch {
     // ignore
-  }
-  if (HARDCODED_API_KEY && !HARDCODED_API_KEY.startsWith("在此粘贴")) {
-    base.apiKey = HARDCODED_API_KEY;
   }
   return base;
 }

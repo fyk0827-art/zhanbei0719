@@ -263,7 +263,6 @@ function sendCapi(event: AnalyticsEvent, properties: EventProperties) {
       eventName: event.sourceName,
       eventId: event.eventId,
       occurredAt: Date.now(),
-      path: safePath(),
       contactId: event.contactId,
       reportId: event.reportId,
       ...getAnalyticsContext(),
