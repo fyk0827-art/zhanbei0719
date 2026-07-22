@@ -286,10 +286,6 @@ function marker(event: AnalyticsEvent, provider: string) {
 function wasSent(event: AnalyticsEvent, provider: string) {
   const providerKey = marker(event, provider);
   if (completedProviders.has(providerKey)) return true;
-  // 51.LA's track API hands the event to sendBeacon but exposes no delivery
-  // acknowledgement. Persisting that handoff would silently suppress a later
-  // retry after navigation, an aborted beacon, or an older broken deployment.
-  if (provider === "la51") return false;
   try {
     const stored = event.storage?.getItem(providerKey) === "1";
     if (stored) completedProviders.add(providerKey);
@@ -302,7 +298,6 @@ function wasSent(event: AnalyticsEvent, provider: string) {
 function markSent(event: AnalyticsEvent, provider: string) {
   const providerKey = marker(event, provider);
   completedProviders.add(providerKey);
-  if (provider === "la51") return;
   try { event.storage?.setItem(providerKey, "1"); } catch { /* Private browsing can deny storage. */ }
 }
 
@@ -422,7 +417,10 @@ function emit(event: AnalyticsEvent) {
   const key = `${event.sourceName}:${event.eventId}`;
   if (!pending.has(key)) pending.set(key, event);
   flush();
-  scheduleAnalyticsInitialization();
+  // Business events can be followed immediately by a route change or PayPal
+  // navigation, so start provider initialization without the landing-page delay.
+  if (event.sourceName === "PageView") scheduleAnalyticsInitialization();
+  else void initializeAnalytics();
   return waitForBrowserHandoff(event);
 }
 

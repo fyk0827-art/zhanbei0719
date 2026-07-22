@@ -130,8 +130,8 @@ describe("analytics delivery", () => {
     expect(callsFor(fetchMock, "/api/analytics/events")).toHaveLength(1);
   });
 
-  it("does not let an old persisted marker suppress a 51.LA retry", async () => {
-    const { laTrack } = installBrowserMocks({ la51: true });
+  it("uses a persisted marker to avoid resending the same 51.LA event after refresh", async () => {
+    const { fetchMock, laTrack } = installBrowserMocks({ la51: true });
     const contactId = "contact-retry";
     const marker = `divinlove_analytics_la51_email:${contactId}`;
     const session = memoryStorage({ [marker]: "1" });
@@ -140,9 +140,23 @@ describe("analytics delivery", () => {
     const { trackEmailVerified } = await import("./analytics");
 
     await trackEmailVerified(contactId);
-    await vi.waitFor(() => expect(laTrack).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(callsFor(fetchMock, "/api/analytics/events")).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(laTrack).toHaveBeenCalledWith("EmailVerified");
+    expect(laTrack).not.toHaveBeenCalled();
+  });
+
+  it("initializes immediately for an event that may be followed by navigation", async () => {
+    vi.useFakeTimers();
+    const { laTrack } = installBrowserMocks({ la51: true });
+    const { trackCheckoutStarted } = await import("./analytics");
+
+    const handoff = trackCheckoutStarted("paypal-order-1");
+    await vi.advanceTimersByTimeAsync(300);
+    await handoff;
+
+    expect(laTrack).toHaveBeenCalledTimes(1);
+    expect(laTrack).toHaveBeenCalledWith("CheckoutStarted");
   });
 
   it("waits for 51.LA session identifiers before draining queued events", async () => {
@@ -150,12 +164,13 @@ describe("analytics delivery", () => {
     const { laTrack } = installBrowserMocks({ la51: true, la51SessionReady: false });
     const { trackEmailVerified } = await import("./analytics");
 
-    void trackEmailVerified("contact-session-wait");
+    const handoff = trackEmailVerified("contact-session-wait");
     await vi.advanceTimersByTimeAsync(1_000);
     expect(laTrack).not.toHaveBeenCalled();
 
     document.cookie = `__vtins__site-id=${encodeURIComponent(JSON.stringify({ sid: "late-session" }))}; __51vcke__site-id=late-visitor`;
     await vi.advanceTimersByTimeAsync(300);
+    await handoff;
     expect(laTrack).toHaveBeenCalledTimes(1);
     expect(laTrack).toHaveBeenCalledWith("EmailVerified");
   });
