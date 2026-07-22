@@ -544,10 +544,14 @@ export default function BlueprintReport({ chart }: Props) {
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [aiReportReady, setAiReportReady] = useState(() => isAiReportDone(reportType));
   const [reportId, setReportId] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return getRouterSearchParams().get("reportId") || loadReportId(reportType);
   });
+  const resolvedReportId = reportId
+    || getRouterSearchParams().get("reportId")
+    || loadReportId(reportType);
 
   useEffect(() => {
     const birth = activeChart?.birthData ?? loadBirthData() ?? undefined;
@@ -604,9 +608,9 @@ export default function BlueprintReport({ chart }: Props) {
   }, [reportType, reportText, i18n.language]);
 
   const hasAiReport = useMemo(() => {
-    if (!isAiReportDone(reportType)) return false;
+    if (!aiReportReady) return false;
     return Boolean(reportText && !isPreviewReport500(reportText));
-  }, [reportType, reportText]);
+  }, [aiReportReady, reportText]);
 
   /** 无预览报告时自动生成 */
   useEffect(() => {
@@ -666,6 +670,7 @@ export default function BlueprintReport({ chart }: Props) {
           setGlobalReportText(status.reportText, reportType);
           saveReportText(status.reportText, reportType);
           markAiReportDone(reportType);
+          setAiReportReady(true);
           setGenerating(false);
           return;
         }
@@ -705,7 +710,10 @@ export default function BlueprintReport({ chart }: Props) {
           setReportText(data.reportText);
           setGlobalReportText(data.reportText);
           saveReportText(data.reportText);
-          if (!isPreviewReport500(data.reportText)) markAiReportDone(reportType);
+          if (!isPreviewReport500(data.reportText)) {
+            markAiReportDone(reportType);
+            setAiReportReady(true);
+          }
         }
       } catch {
         if (!cancelled) setRestoreAccessDenied(true);
@@ -731,7 +739,10 @@ export default function BlueprintReport({ chart }: Props) {
           setReportText(data.reportText);
           setGlobalReportText(data.reportText);
           saveReportText(data.reportText);
-          if (!isPreviewReport500(data.reportText)) markAiReportDone(reportType);
+          if (!isPreviewReport500(data.reportText)) {
+            markAiReportDone(reportType);
+            setAiReportReady(true);
+          }
         }
       } catch {
         /* 离线或 API 未启动时沿用本地缓存 */
@@ -784,8 +795,8 @@ export default function BlueprintReport({ chart }: Props) {
   const paymentLabels = getPaymentLabels(paymentMode);
 
   useEffect(() => {
-    if (hasAiReport && reportId) trackFullReportViewed(reportId);
-  }, [hasAiReport, reportId]);
+    if (hasAiReport && resolvedReportId) trackFullReportViewed(resolvedReportId);
+  }, [hasAiReport, resolvedReportId]);
 
   if (returnedFromPaypal && !hasAiReport) {
     return (
@@ -892,7 +903,7 @@ export default function BlueprintReport({ chart }: Props) {
   if (isPrismLifeScript && prismPre && hasAiReport && reportText) {
     return (
       <>
-        {reportId && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={reportId} /></div>}
+        {resolvedReportId && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={resolvedReportId} /></div>}
         <PrismReportPage
           chart={activeChart}
           pre={prismPre}
@@ -1129,7 +1140,7 @@ export default function BlueprintReport({ chart }: Props) {
 
     return (
       <>
-      {reportId && hasAiReport && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={reportId} /></div>}
+      {resolvedReportId && hasAiReport && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={resolvedReportId} /></div>}
       <MarriageReportView
         name={name}
         roleLabel={marriageRole}
@@ -1185,7 +1196,7 @@ export default function BlueprintReport({ chart }: Props) {
 
     return (
       <>
-      {reportId && hasAiReport && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={reportId} /></div>}
+      {resolvedReportId && hasAiReport && <div className="fixed right-4 top-4 z-[130] print:hidden"><ShareReportButton reportId={resolvedReportId} /></div>}
       <CareerReportView
         name={name}
         roleLabel={careerRole}
@@ -1219,7 +1230,7 @@ export default function BlueprintReport({ chart }: Props) {
 
   return (
     <div className="min-h-screen" style={{ background: "#0D1B2A" }}>
-      {reportId && hasAiReport && <div className="no-print fixed right-4 top-4 z-[130]"><ShareReportButton reportId={reportId} /></div>}
+      {resolvedReportId && hasAiReport && <div className="no-print fixed right-4 top-4 z-[130]"><ShareReportButton reportId={resolvedReportId} /></div>}
       <style>{`@media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
 
       {/* Cover */}

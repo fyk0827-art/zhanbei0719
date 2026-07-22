@@ -161,14 +161,12 @@ export function isPreviewReport500(text: string): boolean {
     || text.includes("500字极简报告")
     || text.includes("500-Word Life Script")
     || text.includes("Unlock the full 19-section Life Script")
-    || (text.includes("PRISM Life Script") && text.includes("Luck index:"))
   );
 }
 
 export function isEnglishPreview(text: string): boolean {
   return /500-Word Life Script/i.test(text)
-    || text.includes("Unlock the full 19-section Life Script")
-    || (text.includes("PRISM Life Script") && text.includes("Luck index:"));
+    || text.includes("Unlock the full 19-section Life Script");
 }
 
 export function isChinesePreview(text: string): boolean {
