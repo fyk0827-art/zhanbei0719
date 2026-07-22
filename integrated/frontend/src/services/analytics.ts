@@ -25,10 +25,6 @@ declare global {
   interface Window {
     fbq?: FbqFunction;
     _fbq?: FbqFunction;
-    LA?: {
-      init?: (config: Record<string, unknown>) => void;
-      track?: (name: string, properties?: EventProperties) => void;
-    };
   }
 }
 
@@ -43,15 +39,9 @@ let initializePromise: Promise<void> | null = null;
 let initializationScheduled = false;
 let facebookReady = false;
 let facebookSdkLoadScheduled = false;
-let la51Ready = false;
-let la51InitStarted = false;
-let la51Initializing = false;
-let la51RetryTimer: number | null = null;
-let la51RetryAttempts = 0;
 let lastPagePath = "";
 
 const CAPI_RETRY_DELAYS = [2_000, 5_000, 15_000];
-const LA51_RETRY_DELAYS = [1_000, 3_000, 10_000];
 
 function isProductionUserPage() {
   return ["divinlove.com", "www.divinlove.com"].includes(window.location.hostname)
@@ -125,7 +115,7 @@ function installFacebookQueue() {
   window._fbq = fbq;
 }
 
-async function diagnostic(provider: "la51" | "facebook" | "capi", status: "READY" | "SDK_CALLED" | "EVENT_SENT" | "ERROR", event?: string, error?: unknown) {
+async function diagnostic(provider: "facebook" | "capi" | "behavior", status: "READY" | "SDK_CALLED" | "EVENT_SENT" | "ERROR", event?: string, error?: unknown) {
   const diagnosticKey = `${provider}:${status}:${event || "provider"}`;
   if (diagnosticMarkers.has(diagnosticKey)) return;
   diagnosticMarkers.add(diagnosticKey);
@@ -164,83 +154,6 @@ async function initializeFacebook(config: PublicSettings) {
   }
 }
 
-async function waitForLaTrack(timeoutMs = 30_000) {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    if (typeof window.LA?.track === "function") return;
-    await new Promise((resolve) => window.setTimeout(resolve, 200));
-  }
-  throw new Error("51.LA event SDK did not become ready");
-}
-
-function readCookie(name: string) {
-  const prefix = `${encodeURIComponent(name)}=`;
-  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix))?.slice(prefix.length);
-}
-
-function hasLa51Session(siteId: string) {
-  try {
-    const session = JSON.parse(decodeURIComponent(readCookie(`__vtins__${siteId}`) || "")) as { sid?: string };
-    const visitor = decodeURIComponent(readCookie(`__51vcke__${siteId}`) || "");
-    return Boolean(session.sid && visitor);
-  } catch {
-    return false;
-  }
-}
-
-async function waitForLa51Session(siteId: string, timeoutMs = 8_000) {
-  const started = Date.now();
-  while (Date.now() - started < timeoutMs) {
-    if (hasLa51Session(siteId)) return;
-    await new Promise((resolve) => window.setTimeout(resolve, 100));
-  }
-  throw new Error("51.LA session identifiers did not become ready");
-}
-
-async function initializeLa51(config: PublicSettings) {
-  if (!config.la51Enabled || !config.la51SiteId || !config.la51Ck || la51Ready || la51Initializing) return;
-  la51Initializing = true;
-  try {
-    await loadScript("LA_COLLECT", "https://sdk.51.la/js-sdk-pro.min.js");
-    if (!la51InitStarted) {
-      window.LA?.init?.({
-        id: config.la51SiteId,
-        ck: config.la51Ck,
-        autoTrack: true,
-        hashMode: true,
-        screenRecord: false,
-      });
-      la51InitStarted = true;
-    }
-    await waitForLaTrack();
-    await waitForLa51Session(config.la51SiteId);
-    // Let the event SDK finish binding its session before draining events that
-    // were queued during the initial page load.
-    await new Promise((resolve) => window.setTimeout(resolve, 150));
-    la51Ready = true;
-    la51RetryAttempts = 0;
-    void diagnostic("la51", "READY");
-    flush();
-  } catch (error) {
-    la51Ready = false;
-    void diagnostic("la51", "ERROR", undefined, error);
-    if (typeof window.LA?.track !== "function") {
-      document.getElementById("LA_CODELESS")?.remove();
-      la51InitStarted = false;
-    }
-    const retryDelay = LA51_RETRY_DELAYS[la51RetryAttempts];
-    la51RetryAttempts += 1;
-    if (retryDelay !== undefined && la51RetryTimer === null) {
-      la51RetryTimer = window.setTimeout(() => {
-        la51RetryTimer = null;
-        void initializeLa51(config);
-      }, retryDelay);
-    }
-  } finally {
-    la51Initializing = false;
-  }
-}
-
 export function initializeAnalytics() {
   if (initializePromise) return initializePromise;
   initializePromise = (async () => {
@@ -251,7 +164,7 @@ export function initializeAnalytics() {
     if (!response.ok) throw new Error(`Analytics settings failed (${response.status})`);
     const payload = await response.json() as { success: boolean; data: PublicSettings };
     settings = payload.data;
-    await Promise.allSettled([initializeFacebook(settings), initializeLa51(settings)]);
+    await initializeFacebook(settings);
     flush();
   })().catch((error) => {
     if (import.meta.env.DEV) console.warn("Analytics initialization failed", error);
@@ -313,20 +226,6 @@ function cleanProperties(event: AnalyticsEvent) {
   return Object.fromEntries(Object.entries(properties).filter(([, value]) => value !== undefined));
 }
 
-function sendLa51(event: AnalyticsEvent) {
-  if (event.sourceName === "PageView" || !settings?.la51Enabled || wasSent(event, "la51")) return true;
-  if (!la51Ready || typeof window.LA?.track !== "function") return false;
-  try {
-    window.LA.track(event.sourceName);
-    markSent(event, "la51");
-    void diagnostic("la51", "SDK_CALLED", event.sourceName);
-    return true;
-  } catch (error) {
-    void diagnostic("la51", "ERROR", event.sourceName, error);
-    return false;
-  }
-}
-
 function sendFacebook(event: AnalyticsEvent, properties: EventProperties) {
   if (!settings?.facebookPixelEnabled || wasSent(event, "facebook")) return true;
   if (!facebookReady || !window.fbq) return false;
@@ -341,8 +240,8 @@ function sendFacebook(event: AnalyticsEvent, properties: EventProperties) {
   }
 }
 
-function sendCapi(event: AnalyticsEvent, properties: EventProperties) {
-  if (["CheckoutStarted", "PurchaseCompleted"].includes(event.sourceName) || wasSent(event, "capi")) return true;
+function sendBackendEvent(event: AnalyticsEvent, properties: EventProperties) {
+  if (["CheckoutStarted", "PurchaseCompleted"].includes(event.sourceName) || wasSent(event, "backend")) return true;
   if (capiInFlight.has(event.eventId)) return false;
   capiInFlight.add(event.eventId);
   void fetch("/api/analytics/events", {
@@ -352,6 +251,7 @@ function sendCapi(event: AnalyticsEvent, properties: EventProperties) {
       eventName: event.sourceName,
       eventId: event.eventId,
       occurredAt: Date.now(),
+      sessionId: behaviorSessionId(),
       contactId: event.contactId,
       reportId: event.reportId,
       ...getAnalyticsContext(),
@@ -359,20 +259,20 @@ function sendCapi(event: AnalyticsEvent, properties: EventProperties) {
     }),
     keepalive: true,
   }).then((response) => {
-    if (!response.ok) throw new Error(`CAPI queue returned ${response.status}`);
-    markSent(event, "capi");
+    if (!response.ok) throw new Error(`Behavior log returned ${response.status}`);
+    markSent(event, "backend");
     capiRetryAttempts.delete(event.eventId);
-    void diagnostic("capi", "EVENT_SENT", event.sourceName);
+    void diagnostic("behavior", "EVENT_SENT", event.sourceName);
     capiInFlight.delete(event.eventId);
     flush();
   }).catch((error) => {
-    void diagnostic("capi", "ERROR", event.sourceName, error);
+    void diagnostic("behavior", "ERROR", event.sourceName, error);
     capiInFlight.delete(event.eventId);
     const failedAttempts = (capiRetryAttempts.get(event.eventId) || 0) + 1;
     capiRetryAttempts.set(event.eventId, failedAttempts);
     const delay = CAPI_RETRY_DELAYS[failedAttempts - 1];
     if (delay === undefined) {
-      markTerminal(event, "capi");
+      markTerminal(event, "backend");
       capiRetryAttempts.delete(event.eventId);
       flush();
       return;
@@ -392,18 +292,16 @@ function flush() {
   if (!settings) return;
   pending.forEach((event, key) => {
     const properties = cleanProperties(event);
-    const laDone = sendLa51(event);
     const fbDone = sendFacebook(event, properties);
-    const capiDone = sendCapi(event, properties);
-    if (laDone && fbDone && capiDone) pending.delete(key);
+    const backendDone = sendBackendEvent(event, properties);
+    if (fbDone && backendDone) pending.delete(key);
   });
 }
 
 function browserProvidersComplete(event: AnalyticsEvent) {
   if (!settings) return false;
-  const laDone = event.sourceName === "PageView" || !settings.la51Enabled || wasSent(event, "la51");
   const facebookDone = !settings.facebookPixelEnabled || wasSent(event, "facebook");
-  return laDone && facebookDone;
+  return facebookDone;
 }
 
 async function waitForBrowserHandoff(event: AnalyticsEvent, timeoutMs = 300) {
@@ -432,6 +330,19 @@ function eventId(prefix: string, id: string) {
 function cookie(name: string) {
   const prefix = `${name}=`;
   return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix))?.slice(prefix.length);
+}
+
+function behaviorSessionId() {
+  const key = "divinlove_behavior_session";
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const created = crypto.randomUUID();
+    sessionStorage.setItem(key, created);
+    return created;
+  } catch {
+    return undefined;
+  }
 }
 
 export function getAnalyticsContext() {

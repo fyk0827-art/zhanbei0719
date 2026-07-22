@@ -3,6 +3,7 @@ package com.lifeblueprint.web;
 import com.lifeblueprint.repository.FacebookConversionsRepository;
 import com.lifeblueprint.service.AnalyticsEventRequest;
 import com.lifeblueprint.service.FacebookConversionsService;
+import com.lifeblueprint.service.UserBehaviorLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,20 +17,24 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
-    private static final Set<String> PROVIDERS = Set.of("la51", "facebook", "capi");
+    private static final Set<String> PROVIDERS = Set.of("facebook", "capi", "behavior");
     private static final Set<String> STATUSES = Set.of("READY", "SDK_CALLED", "EVENT_SENT", "ERROR");
     private final FacebookConversionsService conversions;
     private final FacebookConversionsRepository repository;
+    private final UserBehaviorLogService behaviorLogs;
 
-    public AnalyticsController(FacebookConversionsService conversions, FacebookConversionsRepository repository) {
+    public AnalyticsController(FacebookConversionsService conversions, FacebookConversionsRepository repository,
+                               UserBehaviorLogService behaviorLogs) {
         this.conversions = conversions;
         this.repository = repository;
+        this.behaviorLogs = behaviorLogs;
     }
 
     @PostMapping("/events")
     public ResponseEntity<Map<String, Object>> event(@RequestBody AnalyticsEventRequest event, HttpServletRequest request) {
-        boolean accepted = conversions.enabled() && conversions.enqueueClient(event, clientIp(request), request.getHeader("User-Agent"));
-        return ResponseEntity.accepted().body(Map.of("accepted", accepted));
+        boolean logged = behaviorLogs.recordClient(event);
+        boolean capiQueued = conversions.enabled() && conversions.enqueueClient(event, clientIp(request), request.getHeader("User-Agent"));
+        return ResponseEntity.accepted().body(Map.of("logged", logged, "capiQueued", capiQueued));
     }
 
     @PostMapping("/diagnostics")

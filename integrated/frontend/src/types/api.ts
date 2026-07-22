@@ -120,9 +120,6 @@ export interface PaymentCompleteResponse {
 export interface PublicSettings {
   quizQuestionCount: number;
   reportPrice: number;
-  la51Enabled: boolean;
-  la51SiteId: string;
-  la51Ck: string;
   facebookPixelEnabled: boolean;
   facebookPixelId: string;
 }
@@ -143,9 +140,6 @@ export interface VerificationCodeResponse {
 export interface AdminSettings {
   quizQuestionCount: number;
   paymentMode: "mock" | "live";
-  la51Enabled: boolean;
-  la51SiteId: string;
-  la51Ck: string;
   facebookPixelEnabled: boolean;
   facebookPixelId: string;
   facebookCapiEnabled: boolean;
@@ -158,9 +152,6 @@ export interface AdminSettings {
 export interface UpdateSettingsRequest {
   quizQuestionCount?: number;
   paymentMode?: "mock" | "live";
-  la51Enabled?: boolean;
-  la51SiteId?: string;
-  la51Ck?: string;
   facebookPixelEnabled?: boolean;
   facebookPixelId?: string;
   facebookCapiEnabled?: boolean;

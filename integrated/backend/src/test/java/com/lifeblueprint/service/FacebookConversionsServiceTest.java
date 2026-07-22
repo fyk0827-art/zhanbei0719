@@ -33,7 +33,7 @@ class FacebookConversionsServiceTest {
     void rejectsEventsOutsideTheFixedWhitelist() {
         AnalyticsEventRequest request = new AnalyticsEventRequest(
             "ArbitraryRevenue", "event:1234", System.currentTimeMillis(), "/generator",
-            null, null, null, null, Map.of("value", 9999));
+            null, null, null, null, null, Map.of("value", 9999));
 
         assertThrows(IllegalArgumentException.class, () -> service.enqueueClient(request, "127.0.0.1", "test"));
         verifyNoInteractions(repository);
@@ -44,7 +44,7 @@ class FacebookConversionsServiceTest {
         when(settings.isFacebookCapiEnabled()).thenReturn(false);
         AnalyticsEventRequest request = new AnalyticsEventRequest(
             "EmailVerified", "email:contact-1234", System.currentTimeMillis(), "/generator?token=private",
-            "contact-1234", null, null, null, Map.of("source", "email_verification"));
+            null, "contact-1234", null, null, null, Map.of("source", "email_verification"));
 
         assertFalse(service.enqueueClient(request, "127.0.0.1", "test"));
         verifyNoInteractions(repository);
@@ -59,7 +59,7 @@ class FacebookConversionsServiceTest {
             .thenReturn(true);
         AnalyticsEventRequest request = new AnalyticsEventRequest(
             "PreviewReportViewed", "preview:report-1234", System.currentTimeMillis(), "/report-access?token=private",
-            null, "report-1234", "fb.1.123.456", null,
+            null, null, "report-1234", "fb.1.123.456", null,
             Map.of("content_type", "preview_report", "private_value", "must-not-pass"));
 
         assertTrue(service.enqueueClient(request, "127.0.0.1", "test-agent"));

@@ -7,6 +7,7 @@ public record AnalyticsEventRequest(
     String eventId,
     Long occurredAt,
     String path,
+    String sessionId,
     String contactId,
     String reportId,
     String fbp,

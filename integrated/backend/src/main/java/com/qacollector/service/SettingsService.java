@@ -19,9 +19,6 @@ public class SettingsService {
 
     public static final String KEY_QUIZ_QUESTION_COUNT = "quiz_question_count";
     public static final String KEY_PAYMENT_MODE = "payment_mode";
-    public static final String KEY_51LA_ENABLED = "analytics_51la_enabled";
-    public static final String KEY_51LA_SITE_ID = "analytics_51la_site_id";
-    public static final String KEY_51LA_CK = "analytics_51la_ck";
     public static final String KEY_FACEBOOK_PIXEL_ENABLED = "analytics_facebook_pixel_enabled";
     public static final String KEY_FACEBOOK_PIXEL_ID = "analytics_facebook_pixel_id";
     public static final String KEY_FACEBOOK_CAPI_ENABLED = "analytics_facebook_capi_enabled";
@@ -42,9 +39,6 @@ public class SettingsService {
         return "live".equalsIgnoreCase(mode) ? "live" : "mock";
     }
 
-    public boolean isLa51Enabled() { return Boolean.parseBoolean(getValue(KEY_51LA_ENABLED, "false")); }
-    public String getLa51SiteId() { return getValue(KEY_51LA_SITE_ID, "").trim(); }
-    public String getLa51Ck() { return getValue(KEY_51LA_CK, "").trim(); }
     public boolean isFacebookPixelEnabled() { return Boolean.parseBoolean(getValue(KEY_FACEBOOK_PIXEL_ENABLED, "false")); }
     public String getFacebookPixelId() { return getValue(KEY_FACEBOOK_PIXEL_ID, "").trim(); }
     public boolean isFacebookCapiEnabled() { return Boolean.parseBoolean(getValue(KEY_FACEBOOK_CAPI_ENABLED, "false")); }
@@ -60,9 +54,6 @@ public class SettingsService {
         PublicSettingsDTO dto = new PublicSettingsDTO();
         dto.setQuizQuestionCount(getQuizQuestionCount());
         dto.setReportPrice(pricingService.currentPrice());
-        dto.setLa51Enabled(isLa51Enabled());
-        dto.setLa51SiteId(getLa51SiteId());
-        dto.setLa51Ck(getLa51Ck());
         dto.setFacebookPixelEnabled(isFacebookPixelEnabled());
         dto.setFacebookPixelId(getFacebookPixelId());
         return dto;
@@ -72,9 +63,6 @@ public class SettingsService {
         AdminSettingsDTO dto = new AdminSettingsDTO();
         dto.setQuizQuestionCount(getQuizQuestionCount());
         dto.setPaymentMode(getPaymentMode());
-        dto.setLa51Enabled(isLa51Enabled());
-        dto.setLa51SiteId(getLa51SiteId());
-        dto.setLa51Ck(getLa51Ck());
         dto.setFacebookPixelEnabled(isFacebookPixelEnabled());
         dto.setFacebookPixelId(getFacebookPixelId());
         dto.setFacebookCapiEnabled(isFacebookCapiEnabled());
@@ -96,16 +84,6 @@ public class SettingsService {
             String mode = "live".equalsIgnoreCase(req.getPaymentMode()) ? "live" : "mock";
             upsert(KEY_PAYMENT_MODE, mode, false,
                 "Payment mode: mock simulates success; live for future gateway integration");
-        }
-        if (req.getLa51SiteId() != null) {
-            String value = req.getLa51SiteId().trim();
-            validateIdentifier(value, "51.LA Site ID");
-            upsert(KEY_51LA_SITE_ID, value, true, "51.LA analytics site ID");
-        }
-        if (req.getLa51Ck() != null) {
-            String value = req.getLa51Ck().trim();
-            validateIdentifier(value, "51.LA CK");
-            upsert(KEY_51LA_CK, value, true, "51.LA analytics CK");
         }
         if (req.getFacebookPixelId() != null) {
             String value = req.getFacebookPixelId().trim();
@@ -131,12 +109,6 @@ public class SettingsService {
             if (!value.matches("v[0-9]{1,2}\\.0")) throw new IllegalArgumentException("Meta API version must look like v25.0");
             upsert(KEY_FACEBOOK_CAPI_API_VERSION, value, false, "Meta Graph API version");
         }
-        if (req.getLa51Enabled() != null) {
-            if (req.getLa51Enabled() && (getLa51SiteId().isBlank() || getLa51Ck().isBlank())) {
-                throw new IllegalArgumentException("51.LA Site ID and CK are required before enabling analytics");
-            }
-            upsert(KEY_51LA_ENABLED, String.valueOf(req.getLa51Enabled()), true, "Enable 51.LA analytics");
-        }
         if (req.getFacebookPixelEnabled() != null) {
             if (req.getFacebookPixelEnabled() && getFacebookPixelId().isBlank()) {
                 throw new IllegalArgumentException("Facebook Pixel ID is required before enabling the pixel");
@@ -161,9 +133,6 @@ public class SettingsService {
         if (!repository.existsById(KEY_PAYMENT_MODE)) {
             upsert(KEY_PAYMENT_MODE, "mock", false, "Payment mode: mock or live");
         }
-        seedIfMissing(KEY_51LA_ENABLED, "false", "Enable 51.LA analytics");
-        seedIfMissing(KEY_51LA_SITE_ID, "", "51.LA analytics site ID");
-        seedIfMissing(KEY_51LA_CK, "", "51.LA analytics CK");
         seedIfMissing(KEY_FACEBOOK_PIXEL_ENABLED, "false", "Enable Facebook Pixel");
         seedIfMissing(KEY_FACEBOOK_PIXEL_ID, "", "Facebook Pixel ID");
         seedIfMissing(KEY_FACEBOOK_CAPI_ENABLED, "false", false, "Enable Meta Conversions API");
@@ -201,12 +170,6 @@ public class SettingsService {
 
     private void seedIfMissing(String key, String value, boolean publicVisible, String description) {
         if (!repository.existsById(key)) upsert(key, value, publicVisible, description);
-    }
-
-    private static void validateIdentifier(String value, String label) {
-        if (!value.isEmpty() && !value.matches("[A-Za-z0-9_-]{4,128}")) {
-            throw new IllegalArgumentException(label + " contains unsupported characters");
-        }
     }
 
     private static int parseInt(String raw, int defaultValue, int min, int max) {

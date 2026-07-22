@@ -771,10 +771,7 @@ function AnalyticsSettingsPanel({ settings }: { settings: AdminSettings }) {
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Unable to save analytics settings"),
   });
-  const la51Enabled = form.la51Enabled ?? settings.la51Enabled;
   const facebookEnabled = form.facebookPixelEnabled ?? settings.facebookPixelEnabled;
-  const la51SiteId = form.la51SiteId ?? settings.la51SiteId;
-  const la51Ck = form.la51Ck ?? settings.la51Ck;
   const facebookPixelId = form.facebookPixelId ?? settings.facebookPixelId;
   const capiEnabled = form.facebookCapiEnabled ?? settings.facebookCapiEnabled;
   const capiToken = form.facebookCapiAccessToken ?? settings.facebookCapiAccessToken;
@@ -791,9 +788,6 @@ function AnalyticsSettingsPanel({ settings }: { settings: AdminSettings }) {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Unable to retry events"),
   });
   const handleSave = () => save.mutate({
-    la51Enabled,
-    la51SiteId,
-    la51Ck,
     facebookPixelEnabled: facebookEnabled,
     facebookPixelId,
     facebookCapiEnabled: capiEnabled,
@@ -806,14 +800,8 @@ function AnalyticsSettingsPanel({ settings }: { settings: AdminSettings }) {
   return (
     <section className="border-t border-[#E8E4DC] bg-white p-5 text-[#2D2A26]">
       <div className="mb-2 flex items-center gap-2"><Settings size={20} className="text-[#E8C547]" /><h2 className="text-lg font-medium">Analytics</h2></div>
-      <p className="mb-5 text-sm text-[#6B6560]">Configure 51.LA, Facebook Pixel and server-side Conversions API. Disabled integrations do not affect payment or report delivery.</p>
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
-          <label className="flex items-center justify-between gap-4"><span className="font-medium">51.LA</span><input type="checkbox" checked={la51Enabled} onChange={(e) => setForm((current) => ({ ...current, la51Enabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
-          <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Site ID</span><input value={la51SiteId} onChange={(e) => setForm((current) => ({ ...current, la51SiteId: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
-          <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">CK</span><input value={la51Ck} onChange={(e) => setForm((current) => ({ ...current, la51Ck: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>
-          <p className="text-xs text-[#6B6560]">SDK: {providers.la51?.status || "No browser signal yet"}{providers.la51?.last_event ? ` · ${providers.la51.last_event}` : ""}</p>
-        </div>
+      <p className="mb-5 text-sm text-[#6B6560]">Configure Facebook Pixel and server-side Conversions API. User funnel actions are always stored in the private server behavior log.</p>
+      <div className="grid gap-6 xl:grid-cols-2">
         <div className="space-y-4 rounded-md border border-[#E8E4DC] p-4">
           <label className="flex items-center justify-between gap-4"><span className="font-medium">Facebook Pixel</span><input type="checkbox" checked={facebookEnabled} onChange={(e) => setForm((current) => ({ ...current, facebookPixelEnabled: e.target.checked }))} className="h-5 w-5 accent-[#E8C547]" /></label>
           <label className="block"><span className="mb-1 block text-sm text-[#6B6560]">Pixel ID</span><input inputMode="numeric" value={facebookPixelId} onChange={(e) => setForm((current) => ({ ...current, facebookPixelId: e.target.value }))} className="w-full rounded-md border border-[#E8E4DC] px-3 py-2 text-sm" autoComplete="off" /></label>

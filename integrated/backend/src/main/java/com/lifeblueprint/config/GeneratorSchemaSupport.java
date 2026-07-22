@@ -97,6 +97,27 @@ public final class GeneratorSchemaSupport {
 
     private static void ensureAnalyticsTables(JdbcTemplate jdbc) {
         jdbc.execute("""
+            CREATE TABLE IF NOT EXISTS user_behavior_events (
+              id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+              event_name VARCHAR(64) NOT NULL,
+              event_id VARCHAR(128) NOT NULL,
+              occurred_at BIGINT NOT NULL,
+              source VARCHAR(16) NOT NULL,
+              path VARCHAR(400) NOT NULL,
+              session_id VARCHAR(64) NULL,
+              contact_id VARCHAR(36) NULL,
+              report_id VARCHAR(32) NULL,
+              properties JSON NULL,
+              created_at BIGINT NOT NULL,
+              UNIQUE KEY uk_user_behavior_event (event_name, event_id),
+              INDEX idx_behavior_time (occurred_at),
+              INDEX idx_behavior_name_time (event_name, occurred_at),
+              INDEX idx_behavior_contact (contact_id),
+              INDEX idx_behavior_report (report_id),
+              INDEX idx_behavior_session (session_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """);
+        jdbc.execute("""
             CREATE TABLE IF NOT EXISTS facebook_conversion_events (
               id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
               source_event VARCHAR(64) NOT NULL,

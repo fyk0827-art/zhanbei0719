@@ -28,12 +28,13 @@ public class PaypalService {
     private final PaymentProperties paymentProperties;
     private final PricingService pricingService;
     private final FacebookConversionsService conversions;
+    private final UserBehaviorLogService behaviorLogs;
     private final ObjectMapper json;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
 
     public PaypalService(DeliveryConfigService config, DeliveryRepository delivery, PaymentRepository payments,
                          PaymentProperties paymentProperties, PricingService pricingService, ObjectMapper json,
-                         FacebookConversionsService conversions) {
+                         FacebookConversionsService conversions, UserBehaviorLogService behaviorLogs) {
         this.config = config;
         this.delivery = delivery;
         this.payments = payments;
@@ -41,6 +42,7 @@ public class PaypalService {
         this.pricingService = pricingService;
         this.json = json;
         this.conversions = conversions;
+        this.behaviorLogs = behaviorLogs;
     }
 
     public Map<String, Object> createOrder(String reportId, String returnToken, String clientIp, String userAgent,
@@ -83,6 +85,8 @@ public class PaypalService {
         String paypalOrderId = response.path("id").asText();
         if (paypalOrderId.isBlank()) throw new IllegalStateException("PayPal did not return an order id");
         delivery.attachPaypalOrder(internalId, paypalOrderId, config.paypalEnvironment(), clientIp, userAgent, fbp, fbc, sourcePath);
+        behaviorLogs.recordServer("CheckoutStarted", paypalOrderId, System.currentTimeMillis(), sourcePath,
+            reportId, Map.of("value", amount / 100.0, "currency", "USD", "report_type", "full"));
         conversions.enqueueServer("CheckoutStarted", paypalOrderId, System.currentTimeMillis(), sourcePath,
             reportId, clientIp, userAgent, fbp, fbc,
             Map.of("value", amount / 100.0, "currency", "USD", "report_type", "full"));
@@ -178,6 +182,9 @@ public class PaypalService {
         if (captureId == null || captureId.isBlank() || "null".equals(captureId)) return;
         int amount = ((Number) order.getOrDefault("amount", 0)).intValue();
         long paidAt = order.get("paid_at") instanceof Number value ? value.longValue() : System.currentTimeMillis();
+        behaviorLogs.recordServer("PurchaseCompleted", captureId, paidAt,
+            string(order.get("analytics_source_path")), string(order.get("report_id")),
+            Map.of("value", amount / 100.0, "currency", String.valueOf(order.getOrDefault("currency", "USD"))));
         conversions.enqueueServer("PurchaseCompleted", captureId, paidAt,
             string(order.get("analytics_source_path")), string(order.get("report_id")),
             string(order.get("analytics_client_ip")), string(order.get("analytics_user_agent")),
