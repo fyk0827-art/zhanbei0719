@@ -83,7 +83,7 @@ public class SmtpEmailService {
         return send(email, "Your free Life Script preview is ready", plainText, html);
     }
 
-    private JavaMailSenderImpl createSender() {
+    private JavaMailSenderImpl createSender() throws Exception {
         if (config.smtpHost().isBlank() || config.smtpFromAddress().isBlank()) {
             throw new IllegalStateException("SMTP host and From address are not configured");
         }
@@ -100,9 +100,9 @@ public class SmtpEmailService {
         properties.put("mail.smtp.connectiontimeout", "20000");
         properties.put("mail.smtp.timeout", "45000");
         properties.put("mail.smtp.writetimeout", "45000");
-        if (!config.smtpUsername().isBlank()) {
-            properties.put("mail.smtp.from", config.smtpUsername());
-        }
+        InternetAddress envelopeFrom = new InternetAddress(config.smtpFromAddress());
+        envelopeFrom.validate();
+        properties.put("mail.smtp.from", envelopeFrom.getAddress());
         if ("ssl".equals(config.smtpSecurity())) {
             properties.put("mail.smtp.ssl.enable", "true");
         } else if ("starttls".equals(config.smtpSecurity())) {
