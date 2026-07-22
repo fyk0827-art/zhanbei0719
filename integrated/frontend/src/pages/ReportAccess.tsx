@@ -14,21 +14,24 @@ interface ReportAccessHistoryState {
   reportAccessPaypalOrderId?: string;
 }
 
-function parseReportLink(search: string) {
+function parseReportLink(search: string, hash: string) {
   const params = new URLSearchParams(search);
+  const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
   const tokenValues = params.getAll("token");
   const historyState = (window.history.state || {}) as ReportAccessHistoryState;
-  const incomingAccessToken = params.get("accessToken") || tokenValues[0] || "";
+  const hashAccessToken = hashParams.get("accessToken") || hashParams.get("token") || "";
+  const incomingAccessToken = hashAccessToken
+    || params.get("accessToken") || tokenValues[0] || "";
   return {
     accessToken: incomingAccessToken || historyState.reportAccessToken || "",
     paypalOrderId: params.get("paypal") === "return"
-      ? (params.get("accessToken") ? (params.get("token") || "") : (tokenValues[1] || ""))
+      ? (hashAccessToken || params.get("accessToken") ? (params.get("token") || "") : (tokenValues[1] || ""))
       : (!incomingAccessToken ? (historyState.reportAccessPaypalOrderId || "") : ""),
   };
 }
 
 export default function ReportAccess() {
-  const [link] = useState(() => parseReportLink(window.location.search));
+  const [link] = useState(() => parseReportLink(window.location.search, window.location.hash));
   const token = link.accessToken;
   const [report, setReport] = useState<FetchReportResponse | null>(null);
   const [error, setError] = useState(() => token ? "" : "This report link is incomplete.");
@@ -41,6 +44,7 @@ export default function ReportAccess() {
     if (!token) return;
     const cleanUrl = new URL(window.location.href);
     ["accessToken", "token", "PayerID", "paypal"].forEach((key) => cleanUrl.searchParams.delete(key));
+    cleanUrl.hash = "";
     window.history.replaceState({
       ...(window.history.state || {}),
       reportAccessToken: token,

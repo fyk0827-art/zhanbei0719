@@ -27,10 +27,15 @@ public class ReportDeliveryService {
             throw new IllegalArgumentException("A verified contactId is required");
         }
         try {
-            String statusToken = tokens.create();
+            String statusToken = request.statusToken() == null || request.statusToken().isBlank()
+                ? tokens.create()
+                : request.statusToken().trim();
             String chartJson = request.chartJson() == null ? null : json.writeValueAsString(request.chartJson());
             repository.savePreview(reportId, request.reportText(), chartJson, request.displayName(),
                 request.contactId(), normalizeLanguage(request.language()), tokens.hash(statusToken));
+            if (!repository.statusTokenMatches(reportId, tokens.hash(statusToken))) {
+                throw new IllegalArgumentException("This report already belongs to another browser session");
+            }
             repository.enqueuePreviewEmailOnce(reportId);
             return statusToken;
         } catch (Exception e) {

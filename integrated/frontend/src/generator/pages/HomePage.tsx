@@ -10,7 +10,7 @@ import { fetchPartnerOrder, setPrepaidOrderId } from "../services/partnerApi";
 import { type GeoLocation } from "../services/locationApi";
 import BirthDatePicker from "../components/BirthDatePicker";
 import LocationPicker from "../components/LocationPicker";
-import PlanetCharactersSection from "@/components/PlanetCharactersSection";
+import DeferredPlanetCharacters from "@/components/DeferredPlanetCharacters";
 import "@/styles/prism.css";
 import { contactApi } from "@/services/api";
 import { trackEmailVerified, trackPersonalDetailsCompleted } from "@/services/analytics";
@@ -462,7 +462,7 @@ export default function HomePage({ onGenerate, isLoading }: Props) {
           {t("genEphemeris")}
         </p>
 
-        <PlanetCharactersSection />
+        <DeferredPlanetCharacters />
       </div>
     </div>
   );

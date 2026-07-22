@@ -14,6 +14,7 @@ function PlanetCard({ meta }: { meta: PlanetCharacterMeta }) {
             src={getShowcaseAvatarSrc(meta.planet, meta.gender)}
             alt={meta.name}
             loading="lazy"
+            decoding="async"
             draggable={false}
           />
         </div>

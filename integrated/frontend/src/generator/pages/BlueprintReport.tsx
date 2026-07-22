@@ -584,9 +584,7 @@ export default function BlueprintReport({ chart }: Props) {
     refresh: refreshUnlock,
     retryPaymentReturn,
   } = useReportUnlock(reportId, { reportType });
-  const reportMeta = reportPrice
-    ? { ...baseReportMeta, priceYuan: reportPrice }
-    : baseReportMeta;
+  const reportMeta = { ...baseReportMeta, priceYuan: reportPrice || "" };
 
   const isPrismLifeScript = reportType === "full" || reportType === "simple";
 
@@ -756,6 +754,7 @@ export default function BlueprintReport({ chart }: Props) {
   /** 将本地报告同步到数据库（生成后、支付前也可存） */
   useEffect(() => {
     if (!reportId || !reportText || !activeChart || hasAiReport) return;
+    if (loadReportStatusToken(reportId)) return;
     saveReportToServer({
       reportId,
       reportText,
@@ -1274,7 +1273,11 @@ export default function BlueprintReport({ chart }: Props) {
             className="w-full py-3 rounded-full font-bold text-white shadow-lg disabled:opacity-60"
             style={{ background: paymentLabels.buttonColor }}
           >
-            {paying ? paymentLabels.paying : `${paymentLabels.button} · $${reportMeta.priceYuan}`}
+            {paying
+              ? paymentLabels.paying
+              : reportMeta.priceYuan
+                ? `${paymentLabels.button} · $${reportMeta.priceYuan}`
+                : paymentLabels.button}
           </button>
         </div>
       )}

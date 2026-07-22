@@ -145,7 +145,7 @@ public class DeliveryRepository {
               chart_json = COALESCE(VALUES(chart_json), chart_json),
               contact_id = COALESCE(VALUES(contact_id), contact_id),
               language = VALUES(language),
-              status_token_hash = VALUES(status_token_hash),
+              status_token_hash = COALESCE(status_token_hash, VALUES(status_token_hash)),
               updated_at = VALUES(updated_at)
             """, reportId, displayName, preview, chartJson, contactId, language, statusTokenHash, now, now);
     }

@@ -10,5 +10,6 @@ public record SaveReportRequest(
         String displayName,
         String contactId,
         String language,
-        String reportType
+        String reportType,
+        String statusToken
 ) {}

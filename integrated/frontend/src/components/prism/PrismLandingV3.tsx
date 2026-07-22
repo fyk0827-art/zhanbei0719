@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import PlanetCharactersSection from "@/components/PlanetCharactersSection";
+import DeferredPlanetCharacters from "@/components/DeferredPlanetCharacters";
 import "@/styles/prism-landing-v3.css";
 
 interface PrismLandingV3Props {
@@ -29,7 +29,15 @@ export default function PrismLandingV3({ onStart, questionCount = 20 }: PrismLan
             <div className="v3-hero-visual">
               <div className="v3-texture" aria-hidden />
               <div className="v3-portrait">
-                <img src="/images/luodao-halfbody-v2.png?v=20260720" alt={t("landingExpertName")} />
+                <img
+                  src="/images/judica-halfbody-v2-320.webp?v=20260722"
+                  srcSet="/images/judica-halfbody-v2-320.webp?v=20260722 320w, /images/judica-halfbody-v2-480.webp?v=20260722 480w, /images/judica-halfbody-v2.webp?v=20260722 632w"
+                  sizes="(max-width: 480px) 58vw, 240px"
+                  alt={t("landingExpertName")}
+                  width={632}
+                  height={786}
+                  fetchPriority="high"
+                />
               </div>
             </div>
 
@@ -85,7 +93,7 @@ export default function PrismLandingV3({ onStart, questionCount = 20 }: PrismLan
         </div>
 
         <div className="v3-planets">
-          <PlanetCharactersSection />
+          <DeferredPlanetCharacters />
         </div>
       </div>
     </div>

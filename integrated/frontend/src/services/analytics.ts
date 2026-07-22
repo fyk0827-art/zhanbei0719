@@ -40,14 +40,18 @@ const capiRetryTimers = new Map<string, number>();
 const diagnosticMarkers = new Set<string>();
 let settings: PublicSettings | null = null;
 let initializePromise: Promise<void> | null = null;
+let initializationScheduled = false;
 let facebookReady = false;
+let facebookSdkLoadScheduled = false;
 let la51Ready = false;
 let la51InitStarted = false;
 let la51Initializing = false;
 let la51RetryTimer: number | null = null;
+let la51RetryAttempts = 0;
 let lastPagePath = "";
 
 const CAPI_RETRY_DELAYS = [2_000, 5_000, 15_000];
+const LA51_RETRY_DELAYS = [1_000, 3_000, 10_000];
 
 function isProductionUserPage() {
   return ["divinlove.com", "www.divinlove.com"].includes(window.location.hostname)
@@ -70,19 +74,40 @@ async function waitForSafeUrl() {
 }
 
 function loadScript(id: string, src: string): Promise<void> {
-  const existing = document.getElementById(id) as HTMLScriptElement | null;
+  let existing = document.getElementById(id) as HTMLScriptElement | null;
   if (existing?.dataset.loaded === "true") return Promise.resolve();
+  if (existing?.dataset.failed === "true") {
+    existing.remove();
+    existing = null;
+  }
   return new Promise((resolve, reject) => {
     const script = existing || document.createElement("script");
+    let settled = false;
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      callback();
+    };
     script.id = id;
     script.async = true;
     script.charset = "UTF-8";
     script.src = src;
     script.addEventListener("load", () => {
       script.dataset.loaded = "true";
-      resolve();
+      delete script.dataset.failed;
+      finish(resolve);
     }, { once: true });
-    script.addEventListener("error", () => reject(new Error(`Unable to load ${src}`)), { once: true });
+    script.addEventListener("error", () => {
+      script.dataset.failed = "true";
+      script.remove();
+      finish(() => reject(new Error(`Unable to load ${src}`)));
+    }, { once: true });
+    const timeout = window.setTimeout(() => {
+      script.dataset.failed = "true";
+      script.remove();
+      finish(() => reject(new Error(`Timed out loading ${src}`)));
+    }, 15_000);
     if (!existing) document.head.appendChild(script);
   });
 }
@@ -122,10 +147,18 @@ async function initializeFacebook(config: PublicSettings) {
   try {
     installFacebookQueue();
     window.fbq?.("init", config.facebookPixelId);
-    await loadScript("facebook-pixel-sdk", "https://connect.facebook.net/en_US/fbevents.js");
+    // The official queue accepts events immediately. Parsing the full Pixel SDK
+    // after the first screen settles avoids blocking the landing-page render.
     facebookReady = true;
-    void diagnostic("facebook", "READY");
     flush();
+    if (!facebookSdkLoadScheduled) {
+      facebookSdkLoadScheduled = true;
+      window.setTimeout(() => {
+        void loadScript("facebook-pixel-sdk", "https://connect.facebook.net/en_US/fbevents.js")
+          .then(() => diagnostic("facebook", "READY"))
+          .catch((error) => diagnostic("facebook", "ERROR", undefined, error));
+      }, 8_000);
+    }
   } catch (error) {
     void diagnostic("facebook", "ERROR", undefined, error);
   }
@@ -138,6 +171,30 @@ async function waitForLaTrack(timeoutMs = 30_000) {
     await new Promise((resolve) => window.setTimeout(resolve, 200));
   }
   throw new Error("51.LA event SDK did not become ready");
+}
+
+function readCookie(name: string) {
+  const prefix = `${encodeURIComponent(name)}=`;
+  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix))?.slice(prefix.length);
+}
+
+function hasLa51Session(siteId: string) {
+  try {
+    const session = JSON.parse(decodeURIComponent(readCookie(`__vtins__${siteId}`) || "")) as { sid?: string };
+    const visitor = decodeURIComponent(readCookie(`__51vcke__${siteId}`) || "");
+    return Boolean(session.sid && visitor);
+  } catch {
+    return false;
+  }
+}
+
+async function waitForLa51Session(siteId: string, timeoutMs = 8_000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (hasLa51Session(siteId)) return;
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+  throw new Error("51.LA session identifiers did not become ready");
 }
 
 async function initializeLa51(config: PublicSettings) {
@@ -156,16 +213,28 @@ async function initializeLa51(config: PublicSettings) {
       la51InitStarted = true;
     }
     await waitForLaTrack();
+    await waitForLa51Session(config.la51SiteId);
+    // Let the event SDK finish binding its session before draining events that
+    // were queued during the initial page load.
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
     la51Ready = true;
+    la51RetryAttempts = 0;
     void diagnostic("la51", "READY");
     flush();
   } catch (error) {
+    la51Ready = false;
     void diagnostic("la51", "ERROR", undefined, error);
-    if (la51RetryTimer === null) {
+    if (typeof window.LA?.track !== "function") {
+      document.getElementById("LA_CODELESS")?.remove();
+      la51InitStarted = false;
+    }
+    const retryDelay = LA51_RETRY_DELAYS[la51RetryAttempts];
+    la51RetryAttempts += 1;
+    if (retryDelay !== undefined && la51RetryTimer === null) {
       la51RetryTimer = window.setTimeout(() => {
         la51RetryTimer = null;
         void initializeLa51(config);
-      }, 5_000);
+      }, retryDelay);
     }
   } finally {
     la51Initializing = false;
@@ -188,6 +257,26 @@ export function initializeAnalytics() {
     if (import.meta.env.DEV) console.warn("Analytics initialization failed", error);
   });
   return initializePromise;
+}
+
+export function scheduleAnalyticsInitialization() {
+  if (initializePromise || initializationScheduled || !isProductionUserPage()) return;
+  initializationScheduled = true;
+  const start = () => {
+    initializationScheduled = false;
+    void initializeAnalytics();
+  };
+  const afterFirstRender = () => {
+    window.setTimeout(() => {
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(start, { timeout: 2_000 });
+      } else {
+        start();
+      }
+    }, 1_000);
+  };
+  if (document.readyState === "complete" || typeof window.addEventListener !== "function") afterFirstRender();
+  else window.addEventListener("load", afterFirstRender, { once: true });
 }
 
 function marker(event: AnalyticsEvent, provider: string) {
@@ -333,7 +422,7 @@ function emit(event: AnalyticsEvent) {
   const key = `${event.sourceName}:${event.eventId}`;
   if (!pending.has(key)) pending.set(key, event);
   flush();
-  void initializeAnalytics();
+  scheduleAnalyticsInitialization();
   return waitForBrowserHandoff(event);
 }
 

@@ -9,6 +9,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -29,19 +31,7 @@ public class DeepSeekService {
         String preview = text(report.get("report_text"), 18000);
         String chart = text(report.get("chart_json"), 30000);
         String name = report.get("display_name") == null ? "the client" : String.valueOf(report.get("display_name"));
-        String prompt = """
-            Create the complete paid Life Blueprint report in English for %s.
-            Use the supplied natal-chart data as the factual source. Expand the preview into a thoughtful,
-            structured, practical report covering identity, relationships, career, money, growth challenges,
-            timing themes and a concrete action plan. Do not mention AI, prompts, payment, or missing data.
-            Use Markdown headings and approximately 2500-3500 words.
-
-            PREVIEW:
-            %s
-
-            NATAL CHART JSON:
-            %s
-            """.formatted(name, preview, chart);
+        String prompt = buildPrompt(name, preview, chart, LocalDate.now(ZoneOffset.UTC));
         Map<String, Object> payload = Map.of(
             "model", config.deepSeekModel(),
             "messages", List.of(
@@ -66,6 +56,26 @@ public class DeepSeekService {
         String content = root.path("choices").path(0).path("message").path("content").asText("").trim();
         if (content.isBlank()) throw new IllegalStateException("DeepSeek returned an empty report");
         return content;
+    }
+
+    static String buildPrompt(String name, String preview, String chart, LocalDate currentDate) {
+        return """
+            Create the complete paid Life Blueprint report in English for %s.
+            The current date is %s (UTC). Never describe a past date as current or future.
+            Use the supplied natal-chart data as the factual source. Expand the preview into a thoughtful,
+            structured, practical report covering identity, relationships, career, money, growth challenges,
+            timing themes and a concrete action plan. Do not mention AI, prompts, payment, or missing data.
+            The chart JSON contains natal data only. Do not invent current planetary positions, transits,
+            ephemeris facts, or dated forecasts. Express timing themes as non-dated life stages or practical
+            next-90-day actions unless a date is explicitly present in the supplied source.
+            Use Markdown headings and approximately 2500-3500 words.
+
+            PREVIEW:
+            %s
+
+            NATAL CHART JSON:
+            %s
+            """.formatted(name, currentDate, preview, chart);
     }
 
     private static String text(Object value, int max) {

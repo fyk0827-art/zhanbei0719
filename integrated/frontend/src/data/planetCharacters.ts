@@ -168,5 +168,5 @@ export const PLANET_CHARACTER_GRID = PLANET_CHARACTERS.filter((c) => c.planet !=
 export const SUN_CHARACTER = PLANET_CHARACTERS.find((c) => c.planet === "太阳")!;
 
 export function getShowcaseAvatarSrc(planet: PlanetKey, gender: UserGender): string {
-  return `/images/planet-avatars/${planet}-${gender === "female" ? "女" : "男"}.png`;
+  return `/images/planet-avatars/${planet}-${gender === "female" ? "女" : "男"}-card.webp`;
 }

@@ -58,7 +58,7 @@ export function ReportIdentitySection({
             style={{ background: DARK, borderColor: SECONDARY }}
           >
             <img
-              src={avatarSrc || "/images/planet-avatars/太阳-男.png"}
+              src={avatarSrc || "/images/planet-avatars/太阳-男.webp"}
               alt=""
               className="w-full h-full object-cover scale-110"
               style={{ objectPosition: "50% 22%", transform: "translateY(6%)" }}

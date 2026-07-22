@@ -1,14 +1,14 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { ageGroupApi, settingsApi } from "@/services/api";
-import QuizFlow from "@/components/QuizFlow";
 import PrismLandingV3 from "@/components/prism/PrismLandingV3";
 import PrismBackground from "@/components/prism/PrismBackground";
 import PrismBrandSymbol from "@/components/prism/PrismBrandSymbol";
-import "@/styles/prism.css";
 import { loadBirthData } from "@/generator/services/reportStore";
+
+const QuizFlow = lazy(() => import("@/components/QuizFlow"));
 
 function ageFromBirthDate(year: number, month: number, day: number): number {
   const today = new Date();
@@ -32,6 +32,7 @@ export default function Home() {
   const { data: ageGroups, isLoading: ageGroupsLoading } = useQuery({
     queryKey: ["ageGroups"],
     queryFn: ageGroupApi.list,
+    enabled: showQuiz,
   });
 
   const { data: publicSettings } = useQuery({
@@ -59,7 +60,11 @@ export default function Home() {
   }
 
   if (showQuiz && ageGroups && derivedAge != null) {
-    return <QuizFlow ageGroups={ageGroups} onClose={handleQuizClose} initialAge={derivedAge} />;
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-[#090611]" aria-label="Loading questions" />}>
+        <QuizFlow ageGroups={ageGroups} onClose={handleQuizClose} initialAge={derivedAge} />
+      </Suspense>
+    );
   }
 
   return (

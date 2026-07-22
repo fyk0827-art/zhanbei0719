@@ -60,8 +60,8 @@ public class PaypalService {
         String cancelUrl;
         if (returnToken != null && !returnToken.isBlank()) {
             String encodedToken = URLEncoder.encode(returnToken, StandardCharsets.UTF_8);
-            returnUrl = frontend + "/report-access?accessToken=" + encodedToken + "&paypal=return";
-            cancelUrl = frontend + "/report-access?accessToken=" + encodedToken + "&paypal=cancel";
+            returnUrl = frontend + "/report-access?paypal=return#accessToken=" + encodedToken;
+            cancelUrl = frontend + "/report-access?paypal=cancel#accessToken=" + encodedToken;
         } else {
             returnUrl = frontend + "/generator/final-report?paypal=return&reportId=" +
                 URLEncoder.encode(reportId, StandardCharsets.UTF_8);

@@ -60,12 +60,23 @@ public class PaymentApiController {
     @GetMapping("/reports/{reportId}/status")
     public ResponseEntity<Map<String, Object>> reportStatus(
             @PathVariable String reportId,
-            @RequestParam(required = false) String statusToken
+            @RequestParam(required = false) String statusToken,
+            @RequestHeader(value = "X-Report-Status-Token", required = false) String statusTokenHeader
     ) {
-        return reportDelivery.status(reportId, statusToken).map(ResponseEntity::ok)
+        String token = StringUtils.hasText(statusTokenHeader) ? statusTokenHeader : statusToken;
+        return reportDelivery.status(reportId, token).map(ResponseEntity::ok)
             .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Report status link is invalid")));
     }
 
+    @GetMapping("/report-access")
+    public ResponseEntity<Map<String, Object>> reportAccessHeader(
+            @RequestHeader(value = "X-Report-Access-Token", required = false) String token
+    ) {
+        return reportDelivery.access(token).map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Report link is invalid or unavailable")));
+    }
+
+    /** Keeps previously delivered links working while new clients use the non-logging header endpoint. */
     @GetMapping("/report-access/{token}")
     public ResponseEntity<Map<String, Object>> reportAccess(@PathVariable String token) {
         return reportDelivery.access(token).map(ResponseEntity::ok)
@@ -96,9 +107,11 @@ public class PaymentApiController {
     @GetMapping("/reports/{reportId}")
     public ResponseEntity<Map<String, Object>> getReport(
             @PathVariable String reportId,
-            @RequestParam(required = false) String statusToken
+            @RequestParam(required = false) String statusToken,
+            @RequestHeader(value = "X-Report-Status-Token", required = false) String statusTokenHeader
     ) {
-        if (!reportDelivery.canAccess(reportId, statusToken)) {
+        String token = StringUtils.hasText(statusTokenHeader) ? statusTokenHeader : statusToken;
+        if (!reportDelivery.canAccess(reportId, token)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                     "reportId", reportId,
                     "hasReport", false,

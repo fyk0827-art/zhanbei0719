@@ -15,6 +15,7 @@ audit/
 
 # Dependencies and build outputs
 **/node_modules/
+.pnpm-store/
 **/dist/
 **/target/
 **/build/

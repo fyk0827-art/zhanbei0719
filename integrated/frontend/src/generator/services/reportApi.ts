@@ -95,22 +95,27 @@ export async function saveReportToServer(params: {
       reportType: params.reportType,
       contactId,
       language: "en",
+      statusToken: loadReportStatusToken(params.reportId) || undefined,
     }),
   });
   const data = await parseJson<{ statusToken: string }>(res);
-  localStorage.setItem(statusTokenKey(params.reportId), data.statusToken);
+  if (data.statusToken) localStorage.setItem(statusTokenKey(params.reportId), data.statusToken);
   return data;
 }
 
 export async function fetchReportStatus(reportId: string): Promise<ReportStatusResponse> {
   const token = loadReportStatusToken(reportId);
   if (!token) throw new Error("The report status link is missing. Your completed report will still be emailed to you.");
-  const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}/status?statusToken=${encodeURIComponent(token)}`);
+  const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}/status`, {
+    headers: { "X-Report-Status-Token": token },
+  });
   return parseJson(res);
 }
 
 export async function fetchReportByAccessToken(token: string): Promise<FetchReportResponse> {
-  const res = await fetch(`${API_BASE}/api/report-access/${encodeURIComponent(token)}`);
+  const res = await fetch(`${API_BASE}/api/report-access`, {
+    headers: { "X-Report-Access-Token": token },
+  });
   return parseJson(res);
 }
 
@@ -135,7 +140,9 @@ export async function fetchSharedReport(shareId: string): Promise<SharedReportRe
 export async function fetchReportFromServer(reportId: string): Promise<FetchReportResponse | null> {
   const token = loadReportStatusToken(reportId);
   if (!token) return null;
-  const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}?statusToken=${encodeURIComponent(token)}`);
+  const res = await fetch(`${API_BASE}/api/reports/${encodeURIComponent(reportId)}`, {
+    headers: { "X-Report-Status-Token": token },
+  });
   if (res.status === 404) {
     return { reportId, hasReport: false, unlocked: false };
   }

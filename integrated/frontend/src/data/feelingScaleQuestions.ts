@@ -229,7 +229,7 @@ export const FEELING_SCALE_UI = {
     zh: (total: number, group: string) =>
       `已完成 ${total} 题感觉校准 · ${group}\n接下来填写出生信息，把选择与星图放在一起。`,
     en: (total: number, group: string) =>
-      `Completed ${total} feeling calibrations · ${group}\nNext, enter your birth details and place your answers beside your chart.`,
+      `Completed ${total} feeling calibrations · ${group}\nYour answers are ready to be placed beside your birth chart.`,
   },
   continueBtn: { zh: "生成人生剧本", en: "Generate your life script" },
   payNote: {

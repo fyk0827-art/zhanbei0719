@@ -87,5 +87,5 @@ export function getPlanetAvatarSrc(
       ? birthData
       : resolveUserGender(birthData);
   const genderSuffix = gender === "female" ? "女" : "男";
-  return `/images/planet-avatars/${key}-${genderSuffix}.png`;
+  return `/images/planet-avatars/${key}-${genderSuffix}.webp`;
 }

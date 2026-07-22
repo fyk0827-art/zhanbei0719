@@ -24,7 +24,7 @@ public class SmtpEmailService {
     }
 
     public String sendReport(String email, String displayName, String accessToken) throws Exception {
-        String link = frontendUrl + "/report-access?token=" + accessToken;
+        String link = frontendUrl + "/report-access#accessToken=" + accessToken;
         String safeName = escape(displayName == null || displayName.isBlank() ? "there" : displayName);
         String plainText = """
             Your Life Blueprint is ready
@@ -62,7 +62,7 @@ public class SmtpEmailService {
     }
 
     public String sendPreviewReport(String email, String displayName, String accessToken) throws Exception {
-        String link = frontendUrl + "/report-access?token=" + accessToken;
+        String link = frontendUrl + "/report-access#accessToken=" + accessToken;
         String greeting = displayName == null || displayName.isBlank() ? "there" : displayName;
         String plainText = """
             Your free Life Script preview is ready

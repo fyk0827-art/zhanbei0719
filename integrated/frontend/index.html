@@ -6,10 +6,37 @@
     <title>PRISM Life Script — Decode Your Life Blueprint</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Fredoka:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+      rel="preload"
+      href="/images/judica-halfbody-v2-320.webp?v=20260722"
+      imagesrcset="/images/judica-halfbody-v2-320.webp?v=20260722 320w, /images/judica-halfbody-v2-480.webp?v=20260722 480w, /images/judica-halfbody-v2.webp?v=20260722 632w"
+      imagesizes="(max-width: 480px) 58vw, 240px"
+      as="image"
+      type="image/webp"
+      fetchpriority="high"
+    >
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Fredoka:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Fredoka:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Fredoka:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
+    <style>
+      #prism-static-landing{min-height:100vh;background:#000;color:#f5f0e8;max-width:480px;margin:0 auto;overflow:hidden;font-family:Georgia,serif}
+      #prism-static-landing .ps-hero{position:relative;min-height:clamp(280px,42vh,360px);overflow:hidden}
+      #prism-static-landing .ps-brand{position:absolute;z-index:3;top:14px;left:18px;color:rgba(232,194,126,.55);font:400 10px/1.2 Georgia,serif;letter-spacing:4px}
+      #prism-static-landing .ps-visual{position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 72%,0 100%);background:linear-gradient(135deg,#0a0a0a,#111 40%,#080808)}
+      #prism-static-landing .ps-portrait{position:absolute;bottom:0;left:0;width:58%;max-width:240px}
+      #prism-static-landing .ps-portrait img{display:block;width:100%;height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6));-webkit-mask-image:linear-gradient(to bottom,#000 75%,transparent);mask-image:linear-gradient(to bottom,#000 75%,transparent)}
+      #prism-static-landing .ps-info{position:absolute;right:18px;bottom:28px;z-index:3;max-width:52%;text-align:right}
+      #prism-static-landing .ps-name{margin:0 0 4px;color:#e8c27e;font-size:clamp(28px,8vw,36px);line-height:1.1;letter-spacing:6px}
+      #prism-static-landing .ps-title{margin:0;color:#c9a04a;font-size:clamp(13px,3.6vw,15px);letter-spacing:2px}
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      if (location.pathname === "/" && new URLSearchParams(location.search).get("quiz") !== "1") {
+        document.getElementById("root").innerHTML = '<div id="prism-static-landing"><section class="ps-hero"><div class="ps-brand">LIFE SCRIPT</div><div class="ps-visual"><div class="ps-portrait"><img src="/images/judica-halfbody-v2-320.webp?v=20260722" srcset="/images/judica-halfbody-v2-320.webp?v=20260722 320w, /images/judica-halfbody-v2-480.webp?v=20260722 480w, /images/judica-halfbody-v2.webp?v=20260722 632w" sizes="(max-width: 480px) 58vw, 240px" width="632" height="786" alt="Judica Heventh" fetchpriority="high"></div></div><div class="ps-info"><h1 class="ps-name">Judica Heventh</h1><p class="ps-title">Leading Astrology Expert</p></div></section></div>';
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

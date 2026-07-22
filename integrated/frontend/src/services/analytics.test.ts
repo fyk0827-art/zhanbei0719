@@ -28,7 +28,7 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
   };
 }
 
-function installBrowserMocks(options: { la51?: boolean; facebook?: boolean; capiStatus?: number } = {}): BrowserMocks {
+function installBrowserMocks(options: { la51?: boolean; la51SessionReady?: boolean; facebook?: boolean; capiStatus?: number } = {}): BrowserMocks {
   const laTrack = vi.fn();
   const scripts = new Map<string, EventTarget & Record<string, unknown>>();
   const documentMock = {
@@ -41,6 +41,9 @@ function installBrowserMocks(options: { la51?: boolean; facebook?: boolean; capi
     head: {
       appendChild: (script: EventTarget & { id?: string }) => {
         if (script.id) scripts.set(script.id, script as EventTarget & Record<string, unknown>);
+        if (options.la51 && options.la51SessionReady !== false) {
+          documentMock.cookie = `__vtins__site-id=${encodeURIComponent(JSON.stringify({ sid: "session-id" }))}; __51vcke__site-id=visitor-id`;
+        }
         window.LA = { init: vi.fn(), track: laTrack };
         script.dispatchEvent(new Event("load"));
       },
@@ -142,6 +145,21 @@ describe("analytics delivery", () => {
     expect(laTrack).toHaveBeenCalledWith("EmailVerified");
   });
 
+  it("waits for 51.LA session identifiers before draining queued events", async () => {
+    vi.useFakeTimers();
+    const { laTrack } = installBrowserMocks({ la51: true, la51SessionReady: false });
+    const { trackEmailVerified } = await import("./analytics");
+
+    void trackEmailVerified("contact-session-wait");
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(laTrack).not.toHaveBeenCalled();
+
+    document.cookie = `__vtins__site-id=${encodeURIComponent(JSON.stringify({ sid: "late-session" }))}; __51vcke__site-id=late-visitor`;
+    await vi.advanceTimersByTimeAsync(300);
+    expect(laTrack).toHaveBeenCalledTimes(1);
+    expect(laTrack).toHaveBeenCalledWith("EmailVerified");
+  });
+
   it("sends PageView and CTA once through Facebook Pixel", async () => {
     const { fetchMock } = installBrowserMocks({ facebook: true });
     const { trackPageView, trackSharedReportCtaClicked } = await import("./analytics");
@@ -165,7 +183,7 @@ describe("analytics delivery", () => {
     const { trackReportShared } = await import("./analytics");
 
     const handoff = trackReportShared("share-2", "system");
-    await vi.advanceTimersByTimeAsync(500);
+    await vi.advanceTimersByTimeAsync(1_500);
     await handoff;
     expect(callsFor(fetchMock, "/api/analytics/events")).toHaveLength(1);
 
