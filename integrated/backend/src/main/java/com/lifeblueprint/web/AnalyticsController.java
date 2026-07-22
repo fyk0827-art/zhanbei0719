@@ -17,7 +17,7 @@ import java.util.Set;
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
     private static final Set<String> PROVIDERS = Set.of("la51", "facebook", "capi");
-    private static final Set<String> STATUSES = Set.of("READY", "EVENT_SENT", "ERROR");
+    private static final Set<String> STATUSES = Set.of("READY", "SDK_CALLED", "EVENT_SENT", "ERROR");
     private final FacebookConversionsService conversions;
     private final FacebookConversionsRepository repository;
 

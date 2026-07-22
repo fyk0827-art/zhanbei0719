@@ -16,6 +16,18 @@ function storageThatThrows(): Storage {
   };
 }
 
+function memoryStorage(initial: Record<string, string> = {}): Storage {
+  const values = new Map(Object.entries(initial));
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => Array.from(values.keys())[index] ?? null,
+    removeItem: (key) => { values.delete(key); },
+    setItem: (key, value) => { values.set(key, value); },
+  };
+}
+
 function installBrowserMocks(options: { la51?: boolean; facebook?: boolean; capiStatus?: number } = {}): BrowserMocks {
   const laTrack = vi.fn();
   const scripts = new Map<string, EventTarget & Record<string, unknown>>();
@@ -113,6 +125,21 @@ describe("analytics delivery", () => {
 
     expect(laTrack).toHaveBeenCalledTimes(1);
     expect(callsFor(fetchMock, "/api/analytics/events")).toHaveLength(1);
+  });
+
+  it("does not let an old persisted marker suppress a 51.LA retry", async () => {
+    const { laTrack } = installBrowserMocks({ la51: true });
+    const contactId = "contact-retry";
+    const marker = `divinlove_analytics_la51_email:${contactId}`;
+    const session = memoryStorage({ [marker]: "1" });
+    vi.stubGlobal("sessionStorage", session);
+    window.sessionStorage = session;
+    const { trackEmailVerified } = await import("./analytics");
+
+    await trackEmailVerified(contactId);
+    await vi.waitFor(() => expect(laTrack).toHaveBeenCalledTimes(1));
+
+    expect(laTrack).toHaveBeenCalledWith("EmailVerified");
   });
 
   it("sends PageView and CTA once through Facebook Pixel", async () => {

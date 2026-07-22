@@ -100,7 +100,7 @@ function installFacebookQueue() {
   window._fbq = fbq;
 }
 
-async function diagnostic(provider: "la51" | "facebook" | "capi", status: "READY" | "EVENT_SENT" | "ERROR", event?: string, error?: unknown) {
+async function diagnostic(provider: "la51" | "facebook" | "capi", status: "READY" | "SDK_CALLED" | "EVENT_SENT" | "ERROR", event?: string, error?: unknown) {
   const diagnosticKey = `${provider}:${status}:${event || "provider"}`;
   if (diagnosticMarkers.has(diagnosticKey)) return;
   diagnosticMarkers.add(diagnosticKey);
@@ -197,6 +197,10 @@ function marker(event: AnalyticsEvent, provider: string) {
 function wasSent(event: AnalyticsEvent, provider: string) {
   const providerKey = marker(event, provider);
   if (completedProviders.has(providerKey)) return true;
+  // 51.LA's track API hands the event to sendBeacon but exposes no delivery
+  // acknowledgement. Persisting that handoff would silently suppress a later
+  // retry after navigation, an aborted beacon, or an older broken deployment.
+  if (provider === "la51") return false;
   try {
     const stored = event.storage?.getItem(providerKey) === "1";
     if (stored) completedProviders.add(providerKey);
@@ -209,6 +213,7 @@ function wasSent(event: AnalyticsEvent, provider: string) {
 function markSent(event: AnalyticsEvent, provider: string) {
   const providerKey = marker(event, provider);
   completedProviders.add(providerKey);
+  if (provider === "la51") return;
   try { event.storage?.setItem(providerKey, "1"); } catch { /* Private browsing can deny storage. */ }
 }
 
@@ -230,7 +235,7 @@ function sendLa51(event: AnalyticsEvent) {
   try {
     window.LA.track(event.sourceName);
     markSent(event, "la51");
-    void diagnostic("la51", "EVENT_SENT", event.sourceName);
+    void diagnostic("la51", "SDK_CALLED", event.sourceName);
     return true;
   } catch (error) {
     void diagnostic("la51", "ERROR", event.sourceName, error);
