@@ -101,6 +101,10 @@ const LUCK_LEVEL_EN = [
   { min: 0, level: "awakening", desc: "Luck wakes when you stop fighting your nature and start packaging it" },
 ];
 
+export function englishPlanetName(planet: string): string {
+  return PLANET_EN[planet] ?? planet;
+}
+
 export interface PrismAbilityScore {
   planet: string;
   ability: string;
@@ -497,7 +501,7 @@ export function prismPrecompute(chart: NatalChart, opts: PrismPrecomputeOptions 
       industry,
       role: roleByScore(score),
       score,
-      reason: `${PLANET_EN[top1]} lead + ${PLANET_EN[top2]} support + life-key ${goldenKeyRuler}`,
+      reason: `${englishPlanetName(top1)} lead + ${englishPlanetName(top2)} support + life-key ${englishPlanetName(goldenKeyRuler)}`,
     };
   });
   career_matches.push({

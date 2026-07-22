@@ -13,9 +13,11 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 public class DeepSeekService {
+    private static final Pattern HAN_CHARACTERS = Pattern.compile("\\p{IsHan}");
     private final DeliveryConfigService config;
     private final ObjectMapper json;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
@@ -32,13 +34,27 @@ public class DeepSeekService {
         String chart = text(report.get("chart_json"), 30000);
         String name = report.get("display_name") == null ? "the client" : String.valueOf(report.get("display_name"));
         String prompt = buildPrompt(name, preview, chart, LocalDate.now(ZoneOffset.UTC));
-        Map<String, Object> payload = Map.of(
-            "model", config.deepSeekModel(),
-            "messages", List.of(
+        String content = requestCompletion(apiKey, List.of(
                 Map.of("role", "system", "content", "You are an expert English-language astrology report writer. Be specific, grounded and compassionate."),
                 Map.of("role", "user", "content", prompt)
-            ),
-            "temperature", 0.7,
+            ), 0.7);
+        if (!containsHan(content)) return content;
+
+        String repaired = requestCompletion(apiKey, List.of(
+                Map.of("role", "system", "content", "You are a meticulous English-language editor. Return only the corrected report."),
+                Map.of("role", "user", "content", buildEnglishRepairPrompt(content))
+            ), 0.2);
+        if (containsHan(repaired)) {
+            throw new IllegalStateException("DeepSeek returned non-English text after correction");
+        }
+        return repaired;
+    }
+
+    private String requestCompletion(String apiKey, List<Map<String, String>> messages, double temperature) throws Exception {
+        Map<String, Object> payload = Map.of(
+            "model", config.deepSeekModel(),
+            "messages", messages,
+            "temperature", temperature,
             "max_tokens", 8000,
             "stream", false
         );
@@ -58,6 +74,22 @@ public class DeepSeekService {
         return content;
     }
 
+    static boolean containsHan(String content) {
+        return content != null && HAN_CHARACTERS.matcher(content).find();
+    }
+
+    static String buildEnglishRepairPrompt(String report) {
+        return """
+            Edit the report below so every word is in English. Translate any Chinese or other non-English
+            prose into natural English while preserving all Markdown headings, emphasis, structure, factual
+            meaning, tone, and level of detail. Do not summarize, add commentary, or wrap the result in a
+            code fence. Return the complete corrected report only.
+
+            REPORT:
+            %s
+            """.formatted(report);
+    }
+
     static String buildPrompt(String name, String preview, String chart, LocalDate currentDate) {
         return """
             Create the complete paid Life Blueprint report in English for %s.
@@ -65,6 +97,8 @@ public class DeepSeekService {
             Use the supplied natal-chart data as the factual source. Expand the preview into a thoughtful,
             structured, practical report covering identity, relationships, career, money, growth challenges,
             timing themes and a concrete action plan. Do not mention AI, prompts, payment, or missing data.
+            Write every word of the report in English. Do not use Chinese characters or untranslated
+            non-English expressions, even for labels, metaphors, titles, or emphasis.
             The chart JSON contains natal data only. Do not invent current planetary positions, transits,
             ephemeris facts, or dated forecasts. Express timing themes as non-dated life stages or practical
             next-90-day actions unless a date is explicitly present in the supplied source.
